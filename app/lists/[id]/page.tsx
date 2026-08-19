@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
-  addItem,
   deleteItem,
   deleteList,
   emptyList,
@@ -19,12 +18,10 @@ import { requireUser } from "../../auth";
 import { prisma } from "../../db";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
-import { Field } from "../../components/ui/field";
-import { Input } from "../../components/ui/input";
 import { IconImage } from "../../components/icon-image";
-import { IconPicker } from "../../components/icon-picker";
 import { ImageUploadButton } from "../../components/image-upload";
 import { ListRefresher } from "../../components/list-refresher";
+import { AddItemForm } from "../../components/add-item-form";
 import { groupByCategory } from "../../lib/items";
 import type { GroupableItem } from "../../lib/items";
 
@@ -452,49 +449,7 @@ export default async function ListPage({
       {canEdit ? (
         <div className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface/95 backdrop-blur">
           <div className="mx-auto max-w-md px-4 py-3">
-            <details className="rounded-md border border-line-strong bg-subtle">
-              <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm font-medium text-text-2 [&::-webkit-details-marker]:hidden">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-white">
-                  ＋
-                </span>
-                Aggiungi elemento
-              </summary>
-              <form action={addItem} className="flex flex-col gap-3 p-3">
-                <input type="hidden" name="listId" value={list.id} />
-                <div className="flex gap-2">
-                  <IconPicker initial="📦" />
-                  <Field label="Nome">
-                    <Input
-                      name="name"
-                      type="text"
-                      required
-                      placeholder="es. Maglietta rossa"
-                    />
-                  </Field>
-                </div>
-                <div className="flex gap-2">
-                  <Field label="Quantità">
-                    <Input name="quantity" type="number" min={1} max={999} defaultValue={1} className="min-h-9 w-20" />
-                  </Field>
-                  <Field label="Categoria">
-                    <select
-                      name="categoryId"
-                      className="min-h-9 w-full rounded-md border border-line-strong bg-subtle px-2 py-1.5 text-sm text-text outline-none focus:border-accent"
-                    >
-                      <option value="">Senza categoria</option>
-                      {categories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.emoji} {category.name}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                </div>
-                <Button type="submit" variant="primary">
-                  Aggiungi
-                </Button>
-              </form>
-            </details>
+            <AddItemForm listId={list.id} categories={categories} />
 
             {packs.length > 0 ? (
               <details className="mt-2 rounded-md border border-line-strong bg-subtle">

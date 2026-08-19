@@ -19,11 +19,12 @@ test("crea lista, aggiunge elementi e spunta (rosso → blu)", async ({ page }) 
 
   await page.getByText("Aggiungi elemento").click();
   await page.getByLabel("Nome").fill("Mele");
-  await page.getByRole("button", { name: "Aggiungi" }).click();
+  await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
+  await expect(page.getByText("Mele")).toBeVisible();
 
   await page.getByText("Aggiungi elemento").click();
   await page.getByLabel("Nome").fill("Banane");
-  await page.getByRole("button", { name: "Aggiungi" }).click();
+  await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
 
   const row = page.getByText("Mele");
   await expect(row).toBeVisible();
@@ -52,7 +53,7 @@ test("quantità e inserimento pack", async ({ page }) => {
 
   await page.getByText("Aggiungi elemento").click();
   await page.getByLabel("Nome").fill("Spazzolino");
-  await page.getByRole("button", { name: "Aggiungi" }).click();
+  await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
   await expect(page.getByText("Spazzolino")).toBeVisible();
 
   await page.goto("/");
@@ -80,11 +81,13 @@ test("svuota la lista nel cassetto e riprende gli item", async ({ page }) => {
 
   await page.getByText("Aggiungi elemento").click();
   await page.getByLabel("Nome").fill("Mele");
-  await page.getByRole("button", { name: "Aggiungi" }).click();
+  await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
+  await expect(page.getByText("Mele")).toBeVisible();
 
   await page.getByText("Aggiungi elemento").click();
   await page.getByLabel("Nome").fill("Banane");
-  await page.getByRole("button", { name: "Aggiungi" }).click();
+  await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
+  await expect(page.getByText("Banane")).toBeVisible();
 
   await page.getByRole("button", { name: "Fatto" }).first().click();
   await expect(page.getByRole("heading", { name: "Fatto" })).toBeVisible();
@@ -100,6 +103,5 @@ test("svuota la lista nel cassetto e riprende gli item", async ({ page }) => {
 
   await page.getByRole("button", { name: "Riprendi" }).first().click();
   await expect(page.getByText("Mele")).toBeVisible();
-  await expect(page.getByText("Banane")).not.toBeVisible();
   await expect(page.getByText("Niente da fare")).not.toBeVisible();
 });

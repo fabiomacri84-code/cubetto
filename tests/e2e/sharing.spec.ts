@@ -23,7 +23,8 @@ test("condivisione: invito, join e sola lettura", async ({ browser }) => {
 
     await owner.getByText("Aggiungi elemento").click();
     await owner.getByLabel("Nome").fill("Latte");
-    await owner.getByRole("button", { name: "Aggiungi" }).click();
+    await owner.getByRole("button", { name: "Aggiungi", exact: true }).click();
+    await expect(owner.getByText("Latte")).toBeVisible();
 
     await owner.getByText("Condividi").click();
     await owner.getByRole("button", { name: "Genera codice invito" }).click();
@@ -46,7 +47,12 @@ test("condivisione: invito, join e sola lettura", async ({ browser }) => {
 
     await owner.reload();
     await owner.getByText("Gestisci").click();
-    await owner.getByRole("button", { name: "Cambia ruolo" }).click();
+    await Promise.all([
+      owner.waitForResponse(
+        (r) => r.request().method() === "POST" && r.url().includes("/lists/"),
+      ),
+      owner.getByRole("button", { name: "Cambia ruolo" }).click(),
+    ]);
 
     await guest.reload();
     await expect(guest.getByRole("button", { name: "Fatto" })).toHaveCount(0);
@@ -54,7 +60,12 @@ test("condivisione: invito, join e sola lettura", async ({ browser }) => {
 
     await owner.reload();
     await owner.getByText("Gestisci").click();
-    await owner.getByRole("button", { name: "Cambia ruolo" }).click();
+    await Promise.all([
+      owner.waitForResponse(
+        (r) => r.request().method() === "POST" && r.url().includes("/lists/"),
+      ),
+      owner.getByRole("button", { name: "Cambia ruolo" }).click(),
+    ]);
     await guest.reload();
     await expect(guest.getByRole("button", { name: "Fatto" }).first()).toBeVisible();
   } finally {

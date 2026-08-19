@@ -94,13 +94,16 @@ export async function deleteList(formData: FormData) {
 
 /* ---------- Item ---------- */
 
-export async function addItem(formData: FormData) {
+export async function addItem(
+  _prevState: { ok: boolean; error?: string },
+  formData: FormData,
+): Promise<{ ok: boolean; error?: string }> {
   const user = await getUser();
   const listId = readText(formData, "listId");
   const name = readText(formData, "name");
 
   if (!name) {
-    throw new Error("Il nome dell'elemento è obbligatorio.");
+    return { ok: false, error: "Il nome dell'elemento è obbligatorio." };
   }
 
   const membership = await prisma.listMember.findUnique({
@@ -109,7 +112,7 @@ export async function addItem(formData: FormData) {
   });
 
   if (!membership || membership.role === "viewer") {
-    throw new Error("Non puoi modificare questa lista.");
+    return { ok: false, error: "Non puoi modificare questa lista." };
   }
 
   const last = await prisma.item.findFirst({
@@ -133,6 +136,7 @@ export async function addItem(formData: FormData) {
   });
 
   revalidatePath(`/lists/${listId}`);
+  return { ok: true };
 }
 
 export async function toggleItem(formData: FormData) {
