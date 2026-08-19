@@ -7,5 +7,7 @@ next-env.d.ts
 app/generated
 prisma/dev.db
 uploads
+test-results
+playwright-report
 *.log
 .DS_Store

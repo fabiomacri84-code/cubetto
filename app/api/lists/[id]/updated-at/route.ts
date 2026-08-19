@@ -21,12 +21,15 @@ export async function GET(
       id,
       members: { some: { userId: user.id } },
     },
-    select: { updatedAt: true },
+    select: { updatedAt: true, members: { select: { id: true } } },
   });
 
   if (!list) {
     return Response.json({ error: "Non trovato" }, { status: 404 });
   }
 
-  return Response.json({ updatedAt: list.updatedAt.toISOString() });
+  return Response.json({
+    updatedAt: list.updatedAt.toISOString(),
+    members: list.members.length,
+  });
 }

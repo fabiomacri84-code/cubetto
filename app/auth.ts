@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "./db";
+import { normalizeEmail, hashPassword, verifyPassword } from "./lib/auth-core";
 
 const SESSION_COOKIE = "cubetto_session";
 const SESSION_DAYS = 30;
@@ -10,29 +11,7 @@ const SECURE_SESSION_COOKIES =
   (process.env.NODE_ENV === "production" &&
     process.env.AUTH_SECURE_COOKIES !== "false");
 
-function normalizeEmail(email: string) {
-  return email.trim().toLocaleLowerCase("it-IT");
-}
-
-export function hashPassword(password: string) {
-  const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-
-  return `${salt}:${hash}`;
-}
-
-export function verifyPassword(password: string, passwordHash: string) {
-  const [salt, storedHash] = passwordHash.split(":");
-
-  if (!salt || !storedHash) {
-    return false;
-  }
-
-  const hash = crypto.scryptSync(password, salt, 64);
-  const stored = Buffer.from(storedHash, "hex");
-
-  return stored.length === hash.length && crypto.timingSafeEqual(stored, hash);
-}
+export { normalizeEmail, hashPassword, verifyPassword };
 
 export async function createSession(userId: string) {
   const sessionId = crypto.randomBytes(32).toString("hex");
@@ -108,5 +87,3 @@ export async function requireUser() {
 
   return user;
 }
-
-export { normalizeEmail };

@@ -7,7 +7,7 @@ const POLL_INTERVAL_MS = 4000;
 
 export function ListRefresher({ listId }: { listId: string }) {
   const router = useRouter();
-  const lastUpdated = useRef<string | null>(null);
+  const snapshot = useRef<{ updatedAt: string; members: number } | null>(null);
 
   useEffect(() => {
     const poll = async () => {
@@ -20,13 +20,20 @@ export function ListRefresher({ listId }: { listId: string }) {
           return;
         }
 
-        const data = (await response.json()) as { updatedAt: string };
+        const data = (await response.json()) as {
+          updatedAt: string;
+          members: number;
+        };
 
-        if (lastUpdated.current !== null && data.updatedAt !== lastUpdated.current) {
+        if (
+          snapshot.current !== null &&
+          (data.updatedAt !== snapshot.current.updatedAt ||
+            data.members !== snapshot.current.members)
+        ) {
           router.refresh();
         }
 
-        lastUpdated.current = data.updatedAt;
+        snapshot.current = { updatedAt: data.updatedAt, members: data.members };
       } catch {
         // rete assente: si riprova al prossimo giro
       }
