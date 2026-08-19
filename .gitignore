@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+build
+next-env.d.ts
+.env
+app/generated
+prisma/dev.db
+uploads
+*.log
+.DS_Store

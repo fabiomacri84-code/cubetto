@@ -1,0 +1,95 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+
+@theme {
+  /* Superfici — bianco caldo con rilievi crema */
+  --color-bg: #fbf9f6;
+  --color-subtle: #f4f0ea;
+  --color-surface: #ffffff;
+  --color-surface-2: #f0ebe2;
+  --color-elevated: #ffffff;
+
+  /* Testo — inchiostro scuro caldo */
+  --color-text: #201a12;
+  --color-text-2: #5c5348;
+  --color-text-3: #8a7f70;
+
+  /* Accento — violetto (tema cubetti/valigia) */
+  --color-accent: #6d28d9;
+  --color-accent-strong: #5720b3;
+  --color-accent-soft: rgba(109, 40, 217, 0.09);
+  --color-accent-line: rgba(109, 40, 217, 0.28);
+
+  /* Stati */
+  --color-positive: #0e8a5a;
+  --color-negative: #d4554f;
+  --color-warning: #b9801f;
+  --color-info: #3e86b8;
+
+  /* Linee e divisori */
+  --color-line: #ece5da;
+  --color-line-strong: #dcd2c2;
+  --color-line-soft: #f3eee6;
+
+  /* Tipografia */
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: rgba(109, 40, 217, 0.18);
+    color: #5720b3;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    font-family: inherit;
+  }
+}
+
+/* Scrollbar sottile e coerente con il tema */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-line-strong);
+  border-radius: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

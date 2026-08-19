@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: cubetto-db
+    environment:
+      POSTGRES_USER: cubetto
+      POSTGRES_PASSWORD: cubetto
+      POSTGRES_DB: cubetto
+    ports:
+      - "5433:5432"
+    volumes:
+      - cubetto-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cubetto -d cubetto"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  cubetto-data:

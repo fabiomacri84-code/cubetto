@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ImageSource {
+  emoji
+  manual
+  ai
+}
+
+enum ListRole {
+  owner
+  editor
+  viewer
+}
+
+model User {
+  id           String       @id @default(uuid())
+  createdAt    DateTime     @default(now())
+  name         String
+  email        String       @unique
+  passwordHash String
+  sessions     Session[]
+  ownedLists   List[]       @relation("OwnedLists")
+  memberships  ListMember[]
+  packs        Pack[]
+}
+
+model Session {
+  id        String   @id
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model List {
+  id         String       @id @default(uuid())
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  name       String
+  emoji      String       @default("🛒")
+  color      String       @default("#6d28d9")
+  inviteCode String?      @unique
+  ownerId    String
+  owner      User         @relation("OwnedLists", fields: [ownerId], references: [id], onDelete: Cascade)
+  members    ListMember[]
+  items      Item[]
+
+  @@index([ownerId])
+}
+
+model ListMember {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  listId    String
+  userId    String
+  role      ListRole @default(editor)
+  list      List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, userId])
+  @@index([userId])
+}
+
+model Category {
+  id        String      @id @default(uuid())
+  name      String
+  emoji     String      @default("🗂️")
+  sortOrder Int         @default(0)
+  items     Item[]
+  packItems PackItem[]
+}
+
+model Item {
+  id          String      @id @default(uuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  listId      String
+  name        String
+  emoji       String      @default("📦")
+  quantity    Int         @default(1)
+  checked     Boolean     @default(false)
+  imageUrl    String?
+  imageSource ImageSource @default(emoji)
+  categoryId  String?
+  sortOrder   Int         @default(0)
+  list        List        @relation(fields: [listId], references: [id], onDelete: Cascade)
+  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([listId, sortOrder])
+}
+
+model Pack {
+  id        String     @id @default(uuid())
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  name      String
+  emoji     String     @default("🧳")
+  color     String     @default("#6d28d9")
+  ownerId   String
+  owner     User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  items     PackItem[]
+
+  @@index([ownerId])
+}
+
+model PackItem {
+  id          String      @id @default(uuid())
+  createdAt   DateTime    @default(now())
+  packId      String
+  name        String
+  emoji       String      @default("📦")
+  quantity    Int         @default(1)
+  imageUrl    String?
+  imageSource ImageSource @default(emoji)
+  categoryId  String?
+  sortOrder   Int         @default(0)
+  pack        Pack        @relation(fields: [packId], references: [id], onDelete: Cascade)
+  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([packId, sortOrder])
+}
