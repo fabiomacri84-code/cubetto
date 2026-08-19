@@ -4,6 +4,7 @@ export type GroupableItem = {
   emoji: string;
   quantity: number;
   checked: boolean;
+  stored: boolean;
   imageUrl: string | null;
   sortOrder: number;
   category: { id: string; name: string; emoji: string } | null;

@@ -9,6 +9,7 @@ function item(overrides: Partial<GroupableItem>): GroupableItem {
     emoji: "📦",
     quantity: 1,
     checked: false,
+    stored: false,
     imageUrl: null,
     sortOrder: 0,
     category: null,

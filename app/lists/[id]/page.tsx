@@ -4,9 +4,11 @@ import {
   addItem,
   deleteItem,
   deleteList,
+  emptyList,
   generateInviteCode,
   clearInviteCode,
   insertPack,
+  restoreItem,
   setItemQuantity,
   setMemberRole,
   removeMember,
@@ -33,10 +35,12 @@ function ItemRow({
   item,
   canEdit,
   isOwner,
+  stored = false,
 }: {
   item: GroupableItem;
   canEdit: boolean;
   isOwner: boolean;
+  stored?: boolean;
 }) {
   return (
     <li
@@ -44,7 +48,12 @@ function ItemRow({
         item.checked ? "opacity-75" : ""
       }`}
     >
-      {canEdit ? (
+      {stored ? (
+        <span
+          className="h-8 w-8 shrink-0 rounded-full border-2 border-dashed border-line-strong"
+          aria-hidden
+        />
+      ) : canEdit ? (
         <form action={toggleItem}>
           <input type="hidden" name="id" value={item.id} />
           <button
@@ -83,7 +92,13 @@ function ItemRow({
 
       <div className="min-w-0 flex-1">
         <p
-          className={`truncate text-sm ${item.checked ? "text-text-3 line-through" : "font-medium text-text"}`}
+          className={`truncate text-sm ${
+            stored
+              ? "text-text-3"
+              : item.checked
+                ? "text-text-3 line-through"
+                : "font-medium text-text"
+          }`}
         >
           {item.name}
         </p>
@@ -92,7 +107,19 @@ function ItemRow({
         ) : null}
       </div>
 
-      {canEdit ? (
+      {stored ? (
+        canEdit ? (
+          <form action={restoreItem} className="shrink-0">
+            <input type="hidden" name="id" value={item.id} />
+            <button
+              type="submit"
+              className="rounded-md border border-accent px-2 py-1 text-xs font-semibold text-accent hover:bg-accent-soft"
+            >
+              Riprendi
+            </button>
+          </form>
+        ) : null
+      ) : canEdit ? (
         <div className="flex shrink-0 items-center gap-1">
           <form action={setItemQuantity}>
             <input type="hidden" name="id" value={item.id} />
@@ -199,10 +226,12 @@ export default async function ListPage({
     }),
   ]);
 
-  const todo = groupByCategory(list.items.filter((i) => !i.checked));
-  const done = groupByCategory(list.items.filter((i) => i.checked));
-  const total = list.items.length;
-  const completed = list.items.filter((i) => i.checked).length;
+  const todo = groupByCategory(list.items.filter((i) => !i.checked && !i.stored));
+  const done = groupByCategory(list.items.filter((i) => i.checked && !i.stored));
+  const stored = groupByCategory(list.items.filter((i) => i.stored));
+  const active = list.items.filter((i) => !i.stored);
+  const total = active.length;
+  const completed = active.filter((i) => i.checked).length;
 
   return (
     <main className="mx-auto min-h-dvh max-w-md px-4 pb-32 pt-6">
@@ -230,14 +259,27 @@ export default async function ListPage({
         </div>
       </header>
 
-      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-line">
-        <div
-          className="h-full rounded-full transition-all"
-          style={{
-            width: total ? `${(completed / total) * 100}%` : "0%",
-            backgroundColor: list.color,
-          }}
-        />
+      <div className="mt-3 flex items-center gap-3">
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
+          <div
+            className="h-full rounded-full transition-all"
+            style={{
+              width: total ? `${(completed / total) * 100}%` : "0%",
+              backgroundColor: list.color,
+            }}
+          />
+        </div>
+        {canEdit && total > 0 ? (
+          <form action={emptyList}>
+            <input type="hidden" name="listId" value={list.id} />
+            <button
+              type="submit"
+              className="shrink-0 rounded-md border border-line-strong px-2 py-1 text-xs font-medium text-text-2 hover:bg-surface-2"
+            >
+              Svuota
+            </button>
+          </form>
+        ) : null}
       </div>
 
       {isOwner ? (
@@ -478,8 +520,47 @@ export default async function ListPage({
                   ))}
                 </div>
               </details>
-            ) : null}
-          </div>
+) : null}
+
+        {stored.length > 0 ? (
+          <section>
+            <details className="group rounded-md border border-line bg-subtle">
+              <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-text-3 [&::-webkit-details-marker]:hidden">
+                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-surface-2">
+                  🗃️
+                </span>
+                Cassetto
+                <span className="tnum rounded-full bg-surface-2 px-2 py-0.5 text-[10px]">
+                  {stored.reduce((n, g) => n + g.items.length, 0)}
+                </span>
+                <span className="ml-auto transition-transform group-open:rotate-180">
+                  ▾
+                </span>
+              </summary>
+              <div className="border-t border-line-soft p-3">
+                {stored.map((group) => (
+                  <div key={group.key}>
+                    <p className="px-1 pb-1 pt-2 text-xs font-medium text-text-3">
+                      {group.emoji} {group.name}
+                    </p>
+                    <ul>
+                      {group.items.map((item) => (
+                        <ItemRow
+                          key={item.id}
+                          item={item}
+                          canEdit={canEdit}
+                          isOwner={isOwner}
+                          stored
+                        />
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </details>
+          </section>
+        ) : null}
+      </div>
         </div>
       ) : null}
     </main>

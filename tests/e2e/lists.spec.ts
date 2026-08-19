@@ -64,3 +64,42 @@ test("quantità e inserimento pack", async ({ page }) => {
   await page.getByRole("button", { name: /Kit bagno test/ }).click();
   await expect(page.getByText("Spazzolino")).toBeVisible();
 });
+
+test("svuota la lista nel cassetto e riprende gli item", async ({ page }) => {
+  const email = `svuota-${Date.now()}@cubetto.app`;
+
+  await page.goto("/register");
+  await page.getByLabel("Nome").fill("Svuota Test");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill("password123");
+  await page.getByRole("button", { name: "Crea account" }).click();
+
+  await page.getByText("Nuova lista").click();
+  await page.getByPlaceholder("es. Spesa settimanale").fill("Lista svuota test");
+  await page.getByRole("button", { name: "Crea lista" }).click();
+
+  await page.getByText("Aggiungi elemento").click();
+  await page.getByLabel("Nome").fill("Mele");
+  await page.getByRole("button", { name: "Aggiungi" }).click();
+
+  await page.getByText("Aggiungi elemento").click();
+  await page.getByLabel("Nome").fill("Banane");
+  await page.getByRole("button", { name: "Aggiungi" }).click();
+
+  await page.getByRole("button", { name: "Fatto" }).first().click();
+  await expect(page.getByRole("heading", { name: "Fatto" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Svuota" }).click();
+
+  await expect(page.getByRole("heading", { name: "Fatto" })).not.toBeVisible();
+  await expect(page.getByText("Niente da fare")).toBeVisible();
+
+  await page.getByText("Cassetto").click();
+  await expect(page.getByText("Mele")).toBeVisible();
+  await expect(page.getByText("Banane")).toBeVisible();
+
+  await page.getByRole("button", { name: "Riprendi" }).first().click();
+  await expect(page.getByText("Mele")).toBeVisible();
+  await expect(page.getByText("Banane")).not.toBeVisible();
+  await expect(page.getByText("Niente da fare")).not.toBeVisible();
+});

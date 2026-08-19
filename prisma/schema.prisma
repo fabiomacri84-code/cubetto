@@ -86,6 +86,7 @@ model Item {
   emoji       String      @default("📦")
   quantity    Int         @default(1)
   checked     Boolean     @default(false)
+  stored      Boolean     @default(false)
   imageUrl    String?
   imageSource ImageSource @default(emoji)
   categoryId  String?

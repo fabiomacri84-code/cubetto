@@ -211,6 +211,53 @@ export async function deleteItem(formData: FormData) {
   revalidatePath(`/lists/${item.listId}`);
 }
 
+export async function emptyList(formData: FormData) {
+  const user = await getUser();
+  const listId = readText(formData, "listId");
+
+  const membership = await prisma.listMember.findUnique({
+    where: { listId_userId: { listId, userId: user.id } },
+    select: { role: true },
+  });
+
+  if (!membership || membership.role === "viewer") {
+    throw new Error("Non puoi modificare questa lista.");
+  }
+
+  await prisma.item.updateMany({
+    where: { listId, stored: false },
+    data: { stored: true },
+  });
+
+  revalidatePath(`/lists/${listId}`);
+}
+
+export async function restoreItem(formData: FormData) {
+  const user = await getUser();
+  const itemId = readText(formData, "id");
+  const item = await prisma.item.findUnique({
+    where: { id: itemId },
+    include: { list: { include: { members: true } } },
+  });
+
+  if (!item) {
+    throw new Error("Elemento non trovato.");
+  }
+
+  const member = item.list.members.find((m) => m.userId === user.id);
+
+  if (!member || member.role === "viewer") {
+    throw new Error("Non puoi modificare questa lista.");
+  }
+
+  await prisma.item.update({
+    where: { id: itemId },
+    data: { stored: false, checked: false },
+  });
+
+  revalidatePath(`/lists/${item.listId}`);
+}
+
 /* ---------- Pack ---------- */
 
 export async function createPack(formData: FormData) {
