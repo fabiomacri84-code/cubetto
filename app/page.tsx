@@ -6,7 +6,8 @@ import { Button } from "./components/ui/button";
 import { Card } from "./components/ui/card";
 import { Field } from "./components/ui/field";
 import { Input } from "./components/ui/input";
-import { EmojiPicker } from "./components/emoji-picker";
+import { IconImage } from "./components/icon-image";
+import { IconPicker } from "./components/icon-picker";
 import Link from "next/link";
 import packageJson from "../package.json";
 
@@ -79,7 +80,7 @@ export default async function Home() {
                   style={{ backgroundColor: `${list.color}1a` }}
                   aria-hidden
                 >
-                  {list.emoji}
+                  <IconImage emoji={list.emoji} className="h-8 w-8" />
                 </div>
                 <p className="mt-3 truncate text-sm font-semibold text-text">
                   {list.name}
@@ -107,7 +108,7 @@ export default async function Home() {
               <Field label="Nome">
                 <Input name="name" type="text" required placeholder="es. Spesa settimanale" />
               </Field>
-              <EmojiPicker name="emoji" initial="🛒" />
+              <IconPicker name="emoji" initial="🛒" />
               <Button type="submit" variant="primary" size="sm">
                 Crea lista
               </Button>
@@ -136,7 +137,7 @@ export default async function Home() {
                 style={{ backgroundColor: `${pack.color}1a` }}
                 aria-hidden
               >
-                {pack.emoji}
+                <IconImage emoji={pack.emoji} className="h-8 w-8" />
               </div>
               <p className="mt-3 truncate text-sm font-semibold text-text">
                 {pack.name}
@@ -158,7 +159,7 @@ export default async function Home() {
               <Field label="Nome">
                 <Input name="name" type="text" required placeholder="es. Valigia estate" />
               </Field>
-              <EmojiPicker name="emoji" initial="🧳" />
+              <IconPicker name="emoji" initial="🧳" />
               <Button type="submit" variant="primary" size="sm">
                 Crea pack
               </Button>

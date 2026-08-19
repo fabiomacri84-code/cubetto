@@ -8,7 +8,8 @@ import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Field } from "../../components/ui/field";
 import { Input } from "../../components/ui/input";
-import { EmojiPicker } from "../../components/emoji-picker";
+import { IconImage } from "../../components/icon-image";
+import { IconPicker } from "../../components/icon-picker";
 import { ImageUploadButton } from "../../components/image-upload";
 
 export const runtime = "nodejs";
@@ -55,7 +56,7 @@ export default async function PackPage({
           style={{ backgroundColor: `${pack.color}1a` }}
           aria-hidden
         >
-          {pack.emoji}
+          <IconImage emoji={pack.emoji} className="h-8 w-8" />
         </div>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-bold text-text">{pack.name}</h1>
@@ -92,7 +93,7 @@ export default async function PackPage({
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <span aria-hidden>{item.emoji}</span>
+                    <IconImage emoji={item.emoji} className="h-7 w-7" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -149,7 +150,7 @@ export default async function PackPage({
             <form action={addPackItem} className="flex flex-col gap-3 p-3">
               <input type="hidden" name="packId" value={pack.id} />
               <div className="flex gap-2">
-                <EmojiPicker initial="📦" />
+                <IconPicker initial="📦" />
                 <Field label="Nome">
                   <Input
                     name="name"

@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "icons:build": "node scripts/build-icons.mjs",
     "prisma:generate": "prisma generate",
     "seed": "tsx prisma/seed.ts"
   },

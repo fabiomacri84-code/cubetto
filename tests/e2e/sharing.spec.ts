@@ -27,7 +27,9 @@ test("condivisione: invito, join e sola lettura", async ({ browser }) => {
 
     await owner.getByText("Condividi").click();
     await owner.getByRole("button", { name: "Genera codice invito" }).click();
-    const code = (await owner.locator("p.font-mono").textContent()).trim().toUpperCase();
+    const code = (
+      (await owner.locator("p.font-mono").textContent()) ?? ""
+    ).trim().toUpperCase();
 
     await guest.goto("/register");
     await guest.getByLabel("Nome").fill("Guest");

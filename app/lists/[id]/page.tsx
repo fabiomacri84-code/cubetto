@@ -19,7 +19,8 @@ import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Field } from "../../components/ui/field";
 import { Input } from "../../components/ui/input";
-import { EmojiPicker } from "../../components/emoji-picker";
+import { IconImage } from "../../components/icon-image";
+import { IconPicker } from "../../components/icon-picker";
 import { ImageUploadButton } from "../../components/image-upload";
 import { ListRefresher } from "../../components/list-refresher";
 import { groupByCategory } from "../../lib/items";
@@ -76,7 +77,7 @@ function ItemRow({
             className="h-full w-full object-cover"
           />
         ) : (
-          <span aria-hidden>{item.emoji}</span>
+          <IconImage emoji={item.emoji} className="h-7 w-7" />
         )}
       </div>
 
@@ -219,7 +220,7 @@ export default async function ListPage({
           style={{ backgroundColor: `${list.color}1a` }}
           aria-hidden
         >
-          {list.emoji}
+          <IconImage emoji={list.emoji} className="h-8 w-8" />
         </div>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-bold text-text">{list.name}</h1>
@@ -419,7 +420,7 @@ export default async function ListPage({
               <form action={addItem} className="flex flex-col gap-3 p-3">
                 <input type="hidden" name="listId" value={list.id} />
                 <div className="flex gap-2">
-                  <EmojiPicker initial="📦" />
+                  <IconPicker initial="📦" />
                   <Field label="Nome">
                     <Input
                       name="name"
