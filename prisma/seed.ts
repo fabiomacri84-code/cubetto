@@ -118,6 +118,12 @@ async function main() {
         emoji,
         color,
         ownerId: user.id,
+        members: {
+          create: {
+            userId: user.id,
+            role: "owner",
+          },
+        },
       },
     });
 

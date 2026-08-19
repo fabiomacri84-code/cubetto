@@ -1,0 +1,455 @@
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import {
+  addItem,
+  deleteItem,
+  deleteList,
+  generateInviteCode,
+  clearInviteCode,
+  insertPack,
+  setItemQuantity,
+  toggleItem,
+} from "../../actions";
+import { setItemImage, clearItemImage } from "../../images-actions";
+import { requireUser } from "../../auth";
+import { prisma } from "../../db";
+import { Button } from "../../components/ui/button";
+import { Card } from "../../components/ui/card";
+import { Field } from "../../components/ui/field";
+import { Input } from "../../components/ui/input";
+import { EmojiPicker } from "../../components/emoji-picker";
+import { ImageUploadButton } from "../../components/image-upload";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+type ItemWithCategory = {
+  id: string;
+  name: string;
+  emoji: string;
+  quantity: number;
+  checked: boolean;
+  imageUrl: string | null;
+  sortOrder: number;
+  category: { id: string; name: string; emoji: string } | null;
+};
+
+function groupByCategory(items: ItemWithCategory[]) {
+  const groups = new Map<
+    string,
+    { name: string; emoji: string; items: ItemWithCategory[] }
+  >();
+
+  for (const item of items) {
+    const key = item.category?.id ?? "none";
+    if (!groups.has(key)) {
+      groups.set(key, {
+        name: item.category?.name ?? "Senza categoria",
+        emoji: item.category?.emoji ?? "🗂️",
+        items: [],
+      });
+    }
+    groups.get(key)!.items.push(item);
+  }
+
+  return [...groups.entries()].map(([key, group]) => ({
+    key,
+    ...group,
+    items: group.items.sort((a, b) => a.sortOrder - b.sortOrder),
+  }));
+}
+
+function ItemRow({
+  item,
+  canEdit,
+  isOwner,
+}: {
+  item: ItemWithCategory;
+  canEdit: boolean;
+  isOwner: boolean;
+}) {
+  return (
+    <li
+      className={`flex items-center gap-2.5 border-b border-line-soft py-2 last:border-b-0 ${
+        item.checked ? "opacity-75" : ""
+      }`}
+    >
+      {canEdit ? (
+        <form action={toggleItem}>
+          <input type="hidden" name="id" value={item.id} />
+          <button
+            type="submit"
+            aria-label={item.checked ? "Da rifare" : "Fatto"}
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+              item.checked
+                ? "border-[#3e86b8] bg-[#3e86b8] text-white"
+                : "border-[#d4554f] bg-white"
+            }`}
+          >
+            {item.checked ? <span className="text-sm">✓</span> : null}
+          </button>
+        </form>
+      ) : (
+        <span
+          className={`h-8 w-8 shrink-0 rounded-full border-2 ${
+            item.checked ? "border-[#3e86b8] bg-[#3e86b8]/15" : "border-[#d4554f]/40"
+          }`}
+          aria-hidden
+        />
+      )}
+
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface-2 text-xl">
+        {item.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.imageUrl}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <span aria-hidden>{item.emoji}</span>
+        )}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <p
+          className={`truncate text-sm ${item.checked ? "text-text-3 line-through" : "font-medium text-text"}`}
+        >
+          {item.name}
+        </p>
+        {item.quantity > 1 ? (
+          <p className="tnum text-xs text-text-3">×{item.quantity}</p>
+        ) : null}
+      </div>
+
+      {canEdit ? (
+        <div className="flex shrink-0 items-center gap-1">
+          <form action={setItemQuantity}>
+            <input type="hidden" name="id" value={item.id} />
+            <input
+              type="hidden"
+              name="quantity"
+              value={Math.max(1, item.quantity - 1)}
+            />
+            <button
+              type="submit"
+              className="flex h-7 w-7 items-center justify-center rounded border border-line-strong text-text-2 hover:bg-surface-2"
+              aria-label="Diminuisci quantità"
+              disabled={item.quantity <= 1}
+            >
+              −
+            </button>
+          </form>
+          <form action={setItemQuantity}>
+            <input type="hidden" name="id" value={item.id} />
+            <input
+              type="hidden"
+              name="quantity"
+              value={Math.min(999, item.quantity + 1)}
+            />
+            <button
+              type="submit"
+              className="flex h-7 w-7 items-center justify-center rounded border border-line-strong text-text-2 hover:bg-surface-2"
+              aria-label="Aumenta quantità"
+            >
+              ＋
+            </button>
+          </form>
+        </div>
+      ) : null}
+
+      {isOwner ? (
+        <div className="flex shrink-0 items-center gap-1">
+          <ImageUploadButton action={setItemImage} itemId={item.id} />
+          {item.imageUrl ? (
+            <form action={clearItemImage}>
+              <input type="hidden" name="id" value={item.id} />
+              <button
+                className="flex h-7 w-7 items-center justify-center rounded text-text-3 hover:bg-error/10 hover:text-error"
+                aria-label="Rimuovi foto"
+              >
+                ✕
+              </button>
+            </form>
+          ) : null}
+          <form action={deleteItem}>
+            <input type="hidden" name="id" value={item.id} />
+            <button
+              type="submit"
+              className="flex h-7 w-7 items-center justify-center rounded text-text-3 hover:bg-error/10 hover:text-error"
+              aria-label={`Elimina ${item.name}`}
+            >
+              🗑
+            </button>
+          </form>
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
+export default async function ListPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const user = await requireUser();
+  const { id } = await params;
+
+  const list = await prisma.list.findUnique({
+    where: { id },
+    include: {
+      items: {
+        include: { category: { select: { id: true, name: true, emoji: true } } },
+        orderBy: [{ checked: "asc" }, { sortOrder: "asc" }],
+      },
+      members: true,
+    },
+  });
+
+  if (!list) {
+    notFound();
+  }
+
+  const membership = list.members.find((m) => m.userId === user.id);
+
+  if (!membership) {
+    notFound();
+  }
+
+  const isOwner = membership.role === "owner";
+  const canEdit = membership.role !== "viewer";
+
+  const [categories, packs] = await Promise.all([
+    prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.pack.findMany({
+      where: { ownerId: user.id },
+      include: { items: { select: { id: true } } },
+      orderBy: { updatedAt: "desc" },
+    }),
+  ]);
+
+  const todo = groupByCategory(list.items.filter((i) => !i.checked));
+  const done = groupByCategory(list.items.filter((i) => i.checked));
+  const total = list.items.length;
+  const completed = list.items.filter((i) => i.checked).length;
+
+  return (
+    <main className="mx-auto min-h-dvh max-w-md px-4 pb-32 pt-6">
+      <header className="flex items-center gap-3">
+        <Link
+          href="/"
+          className="flex h-9 w-9 items-center justify-center rounded-md border border-line-strong text-text-2 hover:bg-surface-2"
+          aria-label="Torna alla home"
+        >
+          ←
+        </Link>
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-md text-2xl"
+          style={{ backgroundColor: `${list.color}1a` }}
+          aria-hidden
+        >
+          {list.emoji}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate text-lg font-bold text-text">{list.name}</h1>
+          <p className="tnum text-xs text-text-3">
+            {completed}/{total} fatti
+          </p>
+        </div>
+      </header>
+
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-line">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{
+            width: total ? `${(completed / total) * 100}%` : "0%",
+            backgroundColor: list.color,
+          }}
+        />
+      </div>
+
+      {isOwner ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <details className="rounded-md border border-line bg-subtle px-3 py-1.5 text-sm">
+            <summary className="cursor-pointer list-none font-medium text-text-2 [&::-webkit-details-marker]:hidden">
+              🔗 Condividi
+            </summary>
+            <div className="mt-2 flex flex-col gap-2">
+              {list.inviteCode ? (
+                <>
+                  <p className="tnum rounded-md border border-line-strong bg-surface px-3 py-2 text-center font-mono text-sm font-semibold tracking-widest text-accent">
+                    {list.inviteCode}
+                  </p>
+                  <form action={clearInviteCode}>
+                    <input type="hidden" name="id" value={list.id} />
+                    <Button type="submit" variant="tertiary" size="sm" className="w-full">
+                      Disattiva codice
+                    </Button>
+                  </form>
+                </>
+              ) : (
+                <form action={generateInviteCode}>
+                  <input type="hidden" name="id" value={list.id} />
+                  <Button type="submit" variant="primary" size="sm" className="w-full">
+                    Genera codice invito
+                  </Button>
+                </form>
+              )}
+            </div>
+          </details>
+
+          <details className="rounded-md border border-line bg-subtle px-3 py-1.5 text-sm">
+            <summary className="cursor-pointer list-none font-medium text-text-2 [&::-webkit-details-marker]:hidden">
+              ⚙️ Gestisci
+            </summary>
+            <div className="mt-2">
+              <form action={deleteList}>
+                <input type="hidden" name="id" value={list.id} />
+                <Button type="submit" variant="danger" size="sm" className="w-full">
+                  Elimina lista
+                </Button>
+              </form>
+            </div>
+          </details>
+        </div>
+      ) : null}
+
+      <div className="mt-5 flex flex-col gap-6">
+        <section>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-[#d4554f]">
+            Da fare
+          </h2>
+          <Card className="mt-2 p-3">
+            {todo.length === 0 ? (
+              <p className="py-2 text-center text-sm text-text-3">
+                Niente da fare! 🎉
+              </p>
+            ) : (
+              todo.map((group) => (
+                <div key={group.key}>
+                  <p className="px-1 pb-1 pt-2 text-xs font-medium text-text-3">
+                    {group.emoji} {group.name}
+                  </p>
+                  <ul>
+                    {group.items.map((item) => (
+                      <ItemRow
+                        key={item.id}
+                        item={item}
+                        canEdit={canEdit}
+                        isOwner={isOwner}
+                      />
+                    ))}
+                  </ul>
+                </div>
+              ))
+            )}
+          </Card>
+        </section>
+
+        {done.length > 0 ? (
+          <section>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-[#3e86b8]">
+              Fatto
+            </h2>
+            <Card className="mt-2 p-3">
+              {done.map((group) => (
+                <div key={group.key}>
+                  <p className="px-1 pb-1 pt-2 text-xs font-medium text-text-3">
+                    {group.emoji} {group.name}
+                  </p>
+                  <ul>
+                    {group.items.map((item) => (
+                      <ItemRow
+                        key={item.id}
+                        item={item}
+                        canEdit={canEdit}
+                        isOwner={isOwner}
+                      />
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </Card>
+          </section>
+        ) : null}
+      </div>
+
+      {canEdit ? (
+        <div className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface/95 backdrop-blur">
+          <div className="mx-auto max-w-md px-4 py-3">
+            <details className="rounded-md border border-line-strong bg-subtle">
+              <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm font-medium text-text-2 [&::-webkit-details-marker]:hidden">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-white">
+                  ＋
+                </span>
+                Aggiungi elemento
+              </summary>
+              <form action={addItem} className="flex flex-col gap-3 p-3">
+                <input type="hidden" name="listId" value={list.id} />
+                <div className="flex gap-2">
+                  <EmojiPicker initial="📦" />
+                  <Field label="Nome">
+                    <Input
+                      name="name"
+                      type="text"
+                      required
+                      placeholder="es. Maglietta rossa"
+                    />
+                  </Field>
+                </div>
+                <div className="flex gap-2">
+                  <Field label="Quantità">
+                    <Input name="quantity" type="number" min={1} max={999} defaultValue={1} className="min-h-9 w-20" />
+                  </Field>
+                  <Field label="Categoria">
+                    <select
+                      name="categoryId"
+                      className="min-h-9 w-full rounded-md border border-line-strong bg-subtle px-2 py-1.5 text-sm text-text outline-none focus:border-accent"
+                    >
+                      <option value="">Senza categoria</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.emoji} {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+                <Button type="submit" variant="primary">
+                  Aggiungi
+                </Button>
+              </form>
+            </details>
+
+            {packs.length > 0 ? (
+              <details className="mt-2 rounded-md border border-line-strong bg-subtle">
+                <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm font-medium text-text-2 [&::-webkit-details-marker]:hidden">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-strong text-white">
+                    🧳
+                  </span>
+                  Aggiungi pack
+                </summary>
+                <div className="grid grid-cols-2 gap-2 p-3">
+                  {packs.map((pack) => (
+                    <form key={pack.id} action={insertPack}>
+                      <input type="hidden" name="listId" value={list.id} />
+                      <input type="hidden" name="packId" value={pack.id} />
+                      <Button type="submit" variant="secondary" size="sm" className="w-full justify-start">
+                        <span aria-hidden>{pack.emoji}</span>
+                        <span className="truncate">{pack.name}</span>
+                        <span className="tnum ml-auto text-xs text-text-3">
+                          {pack.items.length}
+                        </span>
+                      </Button>
+                    </form>
+                  ))}
+                </div>
+              </details>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+    </main>
+  );
+}
