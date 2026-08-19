@@ -434,3 +434,73 @@ export async function joinList(formData: FormData) {
   revalidatePath("/");
   redirect(`/lists/${list.id}`);
 }
+
+/* ---------- Membri ---------- */
+
+export async function setMemberRole(formData: FormData) {
+  const user = await getUser();
+  const listId = readText(formData, "listId");
+  const memberId = readText(formData, "memberId");
+  const role = readText(formData, "role");
+
+  const list = await prisma.list.findUnique({
+    where: { id: listId },
+    select: { ownerId: true },
+  });
+
+  if (!list || list.ownerId !== user.id) {
+    throw new Error("Solo il proprietario può gestire i membri.");
+  }
+
+  if (!["editor", "viewer"].includes(role)) {
+    throw new Error("Ruolo non valido.");
+  }
+
+  const member = await prisma.listMember.findUnique({
+    where: { id: memberId },
+    select: { role: true },
+  });
+
+  if (!member) {
+    throw new Error("Membro non trovato.");
+  }
+
+  if (member.role === "owner") {
+    throw new Error("Non puoi cambiare ruolo al proprietario.");
+  }
+
+  await prisma.listMember.update({
+    where: { id: memberId },
+    data: { role: role as "editor" | "viewer" },
+  });
+
+  revalidatePath(`/lists/${listId}`);
+}
+
+export async function removeMember(formData: FormData) {
+  const user = await getUser();
+  const listId = readText(formData, "listId");
+  const memberId = readText(formData, "memberId");
+
+  const list = await prisma.list.findUnique({
+    where: { id: listId },
+    select: { ownerId: true },
+  });
+
+  if (!list || list.ownerId !== user.id) {
+    throw new Error("Solo il proprietario può gestire i membri.");
+  }
+
+  const member = await prisma.listMember.findUnique({
+    where: { id: memberId },
+    select: { role: true },
+  });
+
+  if (!member || member.role === "owner") {
+    throw new Error("Non puoi rimuovere il proprietario.");
+  }
+
+  await prisma.listMember.delete({ where: { id: memberId } });
+
+  revalidatePath(`/lists/${listId}`);
+}

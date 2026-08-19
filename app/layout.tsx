@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import packageJson from "../package.json";
+import { ServiceWorkerRegistration } from "./components/service-worker";
 
 const APP_VERSION = packageJson.version;
 
@@ -10,7 +11,27 @@ export const metadata: Metadata = {
     default: "Cubetto",
     template: "%s · Cubetto",
   },
-  description: "Liste versatili con pack riusabili: spesa, valigia, e tutto il resto.",
+  description: "Liste versatili con pack riusabili: spesa, valigia e tutto il resto.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Cubetto",
+  },
+  icons: {
+    icon: [
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/pwa-icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/pwa-icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      {
+        url: "/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
@@ -29,6 +50,7 @@ export default function RootLayout({
     <html lang="it">
       <body>
         {children}
+        <ServiceWorkerRegistration />
         <div className="sr-only">Cubetto v{APP_VERSION}</div>
       </body>
     </html>

@@ -8,6 +8,8 @@ import {
   clearInviteCode,
   insertPack,
   setItemQuantity,
+  setMemberRole,
+  removeMember,
   toggleItem,
 } from "../../actions";
 import { setItemImage, clearItemImage } from "../../images-actions";
@@ -19,6 +21,7 @@ import { Field } from "../../components/ui/field";
 import { Input } from "../../components/ui/input";
 import { EmojiPicker } from "../../components/emoji-picker";
 import { ImageUploadButton } from "../../components/image-upload";
+import { ListRefresher } from "../../components/list-refresher";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -203,7 +206,7 @@ export default async function ListPage({
         include: { category: { select: { id: true, name: true, emoji: true } } },
         orderBy: [{ checked: "asc" }, { sortOrder: "asc" }],
       },
-      members: true,
+      members: { include: { user: { select: { name: true } } } },
     },
   });
 
@@ -236,6 +239,7 @@ export default async function ListPage({
 
   return (
     <main className="mx-auto min-h-dvh max-w-md px-4 pb-32 pt-6">
+      <ListRefresher listId={list.id} />
       <header className="flex items-center gap-3">
         <Link
           href="/"
@@ -303,7 +307,68 @@ export default async function ListPage({
             <summary className="cursor-pointer list-none font-medium text-text-2 [&::-webkit-details-marker]:hidden">
               ⚙️ Gestisci
             </summary>
-            <div className="mt-2">
+            <div className="mt-2 flex flex-col gap-2">
+              {list.members.length > 1 ? (
+                <ul className="rounded-md border border-line bg-surface">
+                  {list.members.map((member) => (
+                    <li
+                      key={member.id}
+                      className="flex items-center gap-2 border-b border-line-soft px-3 py-2 text-sm last:border-b-0"
+                    >
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-accent">
+                        {member.user.name.charAt(0).toUpperCase()}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-text">
+                        {member.user.name}
+                        {member.userId === user.id ? " (tu)" : ""}
+                      </span>
+                      {member.role === "owner" ? (
+                        <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-3">
+                          proprietario
+                        </span>
+                      ) : (
+                        <>
+                          <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-3">
+                            {member.role === "editor" ? "modifica" : "sola lettura"}
+                          </span>
+                          <form action={setMemberRole}>
+                            <input type="hidden" name="listId" value={list.id} />
+                            <input type="hidden" name="memberId" value={member.id} />
+                            <input
+                              type="hidden"
+                              name="role"
+                              value={member.role === "editor" ? "viewer" : "editor"}
+                            />
+                            <button
+                              type="submit"
+                              className="rounded border border-line-strong px-1.5 py-0.5 text-[10px] font-medium text-text-2 hover:bg-surface-2"
+                              aria-label="Cambia ruolo"
+                            >
+                              {member.role === "editor" ? "→ sola lettura" : "→ modifica"}
+                            </button>
+                          </form>
+                          <form action={removeMember}>
+                            <input type="hidden" name="listId" value={list.id} />
+                            <input type="hidden" name="memberId" value={member.id} />
+                            <button
+                              type="submit"
+                              className="flex h-6 w-6 items-center justify-center rounded text-text-3 hover:bg-error/10 hover:text-error"
+                              aria-label={`Rimuovi ${member.user.name}`}
+                            >
+                              ✕
+                            </button>
+                          </form>
+                        </>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-text-3">
+                  Nessun altro membro: genera un codice invito per condividere la
+                  lista.
+                </p>
+              )}
               <form action={deleteList}>
                 <input type="hidden" name="id" value={list.id} />
                 <Button type="submit" variant="danger" size="sm" className="w-full">
