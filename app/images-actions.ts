@@ -8,7 +8,7 @@ import { requireUser } from "./auth";
 import { prisma } from "./db";
 
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
-const MAX_SIZE = 10 * 1024 * 1024;
+const MAX_SIZE = 25 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp", "gif", "avif"]);
 
 async function ensureUploadsDir() {
@@ -17,7 +17,7 @@ async function ensureUploadsDir() {
 
 async function saveFile(file: File): Promise<string> {
   if (file.size > MAX_SIZE) {
-    throw new Error("L'immagine supera i 5 MB.");
+    throw new Error("L'immagine supera i 25 MB.");
   }
 
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
