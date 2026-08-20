@@ -29,16 +29,19 @@ export default async function SettingsPage({
   const successMessage = changed === "1" ? "Password aggiornata." : null;
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md px-4 pb-24 pt-6">
+    <main className="mx-auto min-h-dvh max-w-md px-4 pb-24 pt-6 sm:px-6">
       <header className="flex items-center gap-3">
         <Link
           href="/"
-          className="flex h-9 w-9 items-center justify-center rounded-md border border-line-strong text-text-2 hover:bg-surface-2"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-line-strong bg-surface text-lg text-text-2 shadow-sm hover:bg-subtle"
           aria-label="Torna alla home"
         >
           ←
         </Link>
-        <h1 className="text-lg font-bold text-text">Impostazioni</h1>
+        <div>
+          <h1 className="text-lg font-extrabold tracking-tight text-text">Impostazioni</h1>
+          <p className="text-xs text-text-3">Account e password</p>
+        </div>
       </header>
 
       <Card className="mt-6">

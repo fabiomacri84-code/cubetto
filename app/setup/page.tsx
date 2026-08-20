@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getCurrentUser } from "../auth";
-import { register } from "../auth-actions";
+import { setupAdmin } from "../auth-actions";
 import { prisma } from "../db";
 import { Button } from "../components/ui/button";
 import { Field } from "../components/ui/field";
@@ -10,7 +9,7 @@ import { Input } from "../components/ui/input";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export default async function RegisterPage({
+export default async function SetupPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>;
@@ -23,13 +22,15 @@ export default async function RegisterPage({
 
   const userCount = await prisma.user.count();
 
-  if (userCount === 0) {
-    redirect("/setup");
+  if (userCount > 0) {
+    redirect("/login");
   }
 
   const { error } = await searchParams;
   const errorMessage =
-    error === "email-exists" ? "Esiste già un account con questa email." : null;
+    error === "email-exists"
+      ? "Esiste già un account con questo nome utente."
+      : null;
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-5 pb-16 pt-14 sm:pt-20">
@@ -42,16 +43,16 @@ export default async function RegisterPage({
             🧳
           </span>
           <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-text">
-            Cubetto
+            Benvenuto
           </h1>
-          <p className="mt-1 text-sm text-text-3">
-            Crea il tuo account per condividere liste e pack.
+          <p className="mt-1 text-sm leading-6 text-text-3">
+            Sei il primo ad accedere: crea l&apos;account amministratore per
+            iniziare a usare Cubetto.
           </p>
         </div>
 
         <div className="card mt-8 p-6">
-          <h2 className="text-lg font-bold text-text">Crea il tuo account</h2>
-          <form action={register} className="mt-4 flex flex-col gap-4">
+          <form action={setupAdmin} className="flex flex-col gap-4">
             {errorMessage ? (
               <p className="rounded-xl border border-negative/30 bg-negative-soft px-3 py-2 text-sm text-negative">
                 {errorMessage}
@@ -62,7 +63,7 @@ export default async function RegisterPage({
               <Input name="name" type="text" required autoFocus autoComplete="name" />
             </Field>
 
-            <Field label="Email o nome utente">
+            <Field label="Nome utente">
               <Input name="email" type="text" required autoComplete="username" />
             </Field>
 
@@ -77,17 +78,10 @@ export default async function RegisterPage({
             </Field>
 
             <Button type="submit" variant="primary" className="mt-1 w-full">
-              Crea account
+              Crea amministratore
             </Button>
           </form>
         </div>
-
-        <p className="mt-5 text-center text-sm text-text-3">
-          Hai già un account?{" "}
-          <Link href="/login" className="font-semibold text-accent-strong">
-            Accedi
-          </Link>
-        </p>
       </div>
     </main>
   );

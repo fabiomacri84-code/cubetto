@@ -38,6 +38,12 @@ export async function register(formData: FormData) {
     throw new Error("Inserisci un nome utente o un'email valida.");
   }
 
+  const userCount = await prisma.user.count();
+
+  if (userCount === 0) {
+    redirect("/setup");
+  }
+
   const existingUser = await prisma.user.findUnique({
     where: { email },
     select: { id: true },
@@ -63,6 +69,12 @@ export async function login(formData: FormData) {
   const email = normalizeEmail(readText(formData, "email"));
   const password = String(formData.get("password") ?? "");
 
+  const userCount = await prisma.user.count();
+
+  if (userCount === 0) {
+    redirect("/setup");
+  }
+
   const user = await prisma.user.findUnique({
     where: { email },
     select: {
@@ -82,6 +94,44 @@ export async function login(formData: FormData) {
 export async function logout() {
   await deleteSession();
   redirect("/login");
+}
+
+export async function setupAdmin(formData: FormData) {
+  const name = readText(formData, "name");
+  const email = normalizeEmail(readText(formData, "email"));
+  const password = readPassword(formData);
+
+  if (!name || !email) {
+    throw new Error("Nome e nome utente sono obbligatori.");
+  }
+
+  const userCount = await prisma.user.count();
+
+  if (userCount > 0) {
+    redirect("/login");
+  }
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+
+  if (existingUser) {
+    redirect("/setup?error=email-exists");
+  }
+
+  const admin = await prisma.user.create({
+    data: {
+      name,
+      email,
+      passwordHash: hashPassword(password),
+      role: "admin",
+    },
+    select: { id: true },
+  });
+
+  await createSession(admin.id);
+  redirect("/");
 }
 
 export async function changePassword(formData: FormData) {

@@ -24,7 +24,7 @@ test("condivisione: invito, join e sola lettura", async ({ browser }) => {
     await owner.getByText("Aggiungi elemento").click();
     await owner.getByLabel("Nome", { exact: true }).fill("Latte");
     await owner.getByRole("button", { name: "Aggiungi", exact: true }).click();
-    await expect(owner.getByText("Latte")).toBeVisible();
+    await expect(owner.getByRole("button", { name: "Fatto" }).filter({ hasText: "Latte" })).toBeVisible();
 
     await owner.getByText("Condividi").click();
     await owner.getByRole("button", { name: "Genera codice invito" }).click();
@@ -42,7 +42,7 @@ test("condivisione: invito, join e sola lettura", async ({ browser }) => {
     await guest.getByRole("button", { name: "Unisciti" }).click();
 
     await expect(guest.getByRole("heading", { name: "Lista condivisa" })).toBeVisible();
-    await expect(guest.getByText("Latte")).toBeVisible();
+    await expect(guest.getByRole("button", { name: "Fatto" }).filter({ hasText: "Latte" })).toBeVisible();
     await expect(guest.getByRole("button", { name: "Fatto" })).toBeVisible();
 
     await owner.getByText("Gestisci").click();

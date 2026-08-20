@@ -20,15 +20,14 @@ test("crea lista, aggiunge elementi e spunta (rosso → blu)", async ({ page }) 
   await page.getByText("Aggiungi elemento").click();
   await page.getByLabel("Nome", { exact: true }).fill("Mele");
   await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
-  await expect(page.getByText("Mele")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Fatto" }).filter({ hasText: "Mele" })).toBeVisible();
 
   await page.getByText("Aggiungi elemento").click();
   await page.getByLabel("Nome", { exact: true }).fill("Banane");
   await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
 
-  const row = page.getByText("Mele");
-  await expect(row).toBeVisible();
-  await expect(page.getByText("Banane")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Fatto" }).filter({ hasText: "Mele" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Fatto" }).filter({ hasText: "Banane" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Da fare" })).toBeVisible();
 
   await page.getByRole("button", { name: "Fatto" }).first().click();
@@ -82,12 +81,12 @@ test("svuota la lista nel cassetto e riprende gli item", async ({ page }) => {
   await page.getByText("Aggiungi elemento").click();
   await page.getByLabel("Nome", { exact: true }).fill("Mele");
   await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
-  await expect(page.getByText("Mele")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Fatto" }).filter({ hasText: "Mele" })).toBeVisible();
 
   await page.getByText("Aggiungi elemento").click();
   await page.getByLabel("Nome", { exact: true }).fill("Banane");
   await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
-  await expect(page.getByText("Banane")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Fatto" }).filter({ hasText: "Banane" })).toBeVisible();
 
   await page.getByRole("button", { name: "Fatto" }).first().click();
   await expect(page.getByRole("heading", { name: "Fatto" })).toBeVisible();
@@ -98,10 +97,10 @@ test("svuota la lista nel cassetto e riprende gli item", async ({ page }) => {
   await expect(page.getByText("Niente da fare")).toBeVisible();
 
   await page.getByText("Cassetto").click();
-  await expect(page.getByText("Mele")).toBeVisible();
-  await expect(page.getByText("Banane")).toBeVisible();
+  await expect(page.locator("li").filter({ hasText: "Mele" })).toBeVisible();
+  await expect(page.locator("li").filter({ hasText: "Banane" })).toBeVisible();
 
   await page.getByRole("button", { name: "Riprendi" }).first().click();
-  await expect(page.getByText("Mele")).toBeVisible();
+  await expect(page.locator("li").filter({ hasText: "Mele" })).toBeVisible();
   await expect(page.getByText("Niente da fare")).not.toBeVisible();
 });

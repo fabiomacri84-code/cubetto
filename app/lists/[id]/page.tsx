@@ -17,18 +17,18 @@ import { setItemImage, clearItemImage } from "../../images-actions";
 import { requireUser } from "../../auth";
 import { prisma } from "../../db";
 import { Button } from "../../components/ui/button";
-import { Card } from "../../components/ui/card";
 import { IconImage } from "../../components/icon-image";
 import { ImageUploadButton } from "../../components/image-upload";
 import { ListRefresher } from "../../components/list-refresher";
-import { AddItemForm } from "../../components/add-item-form";
+import { ListAddSheet } from "../../components/list-add-sheet";
+import { AppShell } from "../../components/app-shell";
 import { groupByCategory } from "../../lib/items";
 import type { GroupableItem } from "../../lib/items";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function ItemRow({
+function Tile({
   item,
   canEdit,
   isOwner,
@@ -40,84 +40,118 @@ function ItemRow({
   stored?: boolean;
 }) {
   return (
-    <li
-      className={`flex items-center gap-2.5 border-b border-line-soft py-2 last:border-b-0 ${
-        item.checked ? "opacity-75" : ""
-      }`}
-    >
+    <li className="relative">
       {stored ? (
-        <span
-          className="h-8 w-8 shrink-0 rounded-full border-2 border-dashed border-line-strong"
-          aria-hidden
-        />
+        <div className="tile tile-done h-full p-3">
+          <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-surface-2 text-2xl opacity-70">
+            {item.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={item.imageUrl}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <IconImage emoji={item.emoji} className="h-8 w-8" />
+            )}
+          </span>
+          <p className="mt-2 truncate text-sm font-medium text-text-3">
+            {item.name}
+          </p>
+          {item.quantity > 1 ? (
+            <p className="tnum text-xs text-text-3">×{item.quantity}</p>
+          ) : null}
+        </div>
       ) : canEdit ? (
-        <form action={toggleItem}>
+        <form action={toggleItem} className="tile block h-full">
           <input type="hidden" name="id" value={item.id} />
           <button
             type="submit"
             aria-label={item.checked ? "Da rifare" : "Fatto"}
-            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-              item.checked
-                ? "border-[#3e86b8] bg-[#3e86b8] text-white"
-                : "border-[#d4554f] bg-white"
+            className={`block h-full w-full p-3 text-left ${
+              item.checked ? "tile-done" : ""
             }`}
           >
-            {item.checked ? <span className="text-sm">✓</span> : null}
+            <span className="flex items-start justify-between">
+              <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-surface-2 text-2xl">
+                {item.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={item.imageUrl}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <IconImage emoji={item.emoji} className="h-8 w-8" />
+                )}
+              </span>
+              {item.checked ? (
+                <span
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-positive text-sm font-bold text-white"
+                  aria-hidden
+                >
+                  ✓
+                </span>
+              ) : null}
+            </span>
+            <p
+              className={`mt-2 truncate text-sm font-semibold ${
+                item.checked ? "text-text-3 line-through" : "text-text"
+              }`}
+            >
+              {item.name}
+            </p>
+            {item.quantity > 1 ? (
+              <p className="tnum mt-0.5 text-xs text-text-3">
+                ×{item.quantity}
+              </p>
+            ) : null}
           </button>
         </form>
       ) : (
-        <span
-          className={`h-8 w-8 shrink-0 rounded-full border-2 ${
-            item.checked ? "border-[#3e86b8] bg-[#3e86b8]/15" : "border-[#d4554f]/40"
-          }`}
-          aria-hidden
-        />
+        <div className={`tile h-full p-3 ${item.checked ? "tile-done" : ""}`}>
+          <span className="flex items-start justify-between">
+            <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-surface-2 text-2xl">
+              {item.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.imageUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <IconImage emoji={item.emoji} className="h-8 w-8" />
+              )}
+            </span>
+            {item.checked ? (
+              <span
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-positive text-sm font-bold text-white"
+                aria-hidden
+              >
+                ✓
+              </span>
+            ) : (
+              <span
+                className="h-7 w-7 shrink-0 rounded-full border-2 border-line-strong bg-surface"
+                aria-hidden
+              />
+            )}
+          </span>
+          <p
+            className={`mt-2 truncate text-sm font-semibold ${
+              item.checked ? "text-text-3 line-through" : "text-text"
+            }`}
+          >
+            {item.name}
+          </p>
+          {item.quantity > 1 ? (
+            <p className="tnum mt-0.5 text-xs text-text-3">×{item.quantity}</p>
+          ) : null}
+        </div>
       )}
 
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface-2 text-xl">
-        {item.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={item.imageUrl}
-            alt=""
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <IconImage emoji={item.emoji} className="h-7 w-7" />
-        )}
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <p
-          className={`truncate text-sm ${
-            stored
-              ? "text-text-3"
-              : item.checked
-                ? "text-text-3 line-through"
-                : "font-medium text-text"
-          }`}
-        >
-          {item.name}
-        </p>
-        {item.quantity > 1 ? (
-          <p className="tnum text-xs text-text-3">×{item.quantity}</p>
-        ) : null}
-      </div>
-
-      {stored ? (
-        canEdit ? (
-          <form action={restoreItem} className="shrink-0">
-            <input type="hidden" name="id" value={item.id} />
-            <button
-              type="submit"
-              className="rounded-md border border-accent px-2 py-1 text-xs font-semibold text-accent hover:bg-accent-soft"
-            >
-              Riprendi
-            </button>
-          </form>
-        ) : null
-      ) : canEdit ? (
-        <div className="flex shrink-0 items-center gap-1">
+      {!stored && canEdit ? (
+        <div className="absolute right-2 top-2 flex items-center gap-1">
           <form action={setItemQuantity}>
             <input type="hidden" name="id" value={item.id} />
             <input
@@ -127,9 +161,9 @@ function ItemRow({
             />
             <button
               type="submit"
-              className="flex h-7 w-7 items-center justify-center rounded border border-line-strong text-text-2 hover:bg-surface-2"
               aria-label="Diminuisci quantità"
               disabled={item.quantity <= 1}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-base font-semibold text-text-2 shadow-sm hover:bg-subtle disabled:opacity-40"
             >
               −
             </button>
@@ -143,39 +177,39 @@ function ItemRow({
             />
             <button
               type="submit"
-              className="flex h-7 w-7 items-center justify-center rounded border border-line-strong text-text-2 hover:bg-surface-2"
               aria-label="Aumenta quantità"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-base font-semibold text-text-2 shadow-sm hover:bg-subtle"
             >
               ＋
             </button>
           </form>
-        </div>
-      ) : null}
-
-      {isOwner ? (
-        <div className="flex shrink-0 items-center gap-1">
-          <ImageUploadButton action={setItemImage} itemId={item.id} />
-          {item.imageUrl ? (
-            <form action={clearItemImage}>
-              <input type="hidden" name="id" value={item.id} />
-              <button
-                className="flex h-7 w-7 items-center justify-center rounded text-text-3 hover:bg-error/10 hover:text-error"
-                aria-label="Rimuovi foto"
-              >
-                ✕
-              </button>
-            </form>
+          {isOwner ? (
+            <>
+              <ImageUploadButton action={setItemImage} itemId={item.id} />
+              {item.imageUrl ? (
+                <form action={clearItemImage}>
+                  <input type="hidden" name="id" value={item.id} />
+                  <button
+                    type="submit"
+                    aria-label="Rimuovi foto"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-xs text-text-3 shadow-sm hover:bg-negative-soft hover:text-negative"
+                  >
+                    ✕
+                  </button>
+                </form>
+              ) : null}
+              <form action={deleteItem}>
+                <input type="hidden" name="id" value={item.id} />
+                <button
+                  type="submit"
+                  aria-label={`Elimina ${item.name}`}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-sm text-text-3 shadow-sm hover:bg-negative-soft hover:text-negative"
+                >
+                  🗑
+                </button>
+              </form>
+            </>
           ) : null}
-          <form action={deleteItem}>
-            <input type="hidden" name="id" value={item.id} />
-            <button
-              type="submit"
-              className="flex h-7 w-7 items-center justify-center rounded text-text-3 hover:bg-error/10 hover:text-error"
-              aria-label={`Elimina ${item.name}`}
-            >
-              🗑
-            </button>
-          </form>
         </div>
       ) : null}
     </li>
@@ -190,16 +224,24 @@ export default async function ListPage({
   const user = await requireUser();
   const { id } = await params;
 
-  const list = await prisma.list.findUnique({
-    where: { id },
-    include: {
-      items: {
-        include: { category: { select: { id: true, name: true, emoji: true } } },
-        orderBy: [{ checked: "asc" }, { sortOrder: "asc" }],
+  const [list, categories, packs] = await Promise.all([
+    prisma.list.findUnique({
+      where: { id },
+      include: {
+        items: {
+          include: { category: { select: { id: true, name: true, emoji: true } } },
+          orderBy: [{ checked: "asc" }, { sortOrder: "asc" }],
+        },
+        members: { include: { user: { select: { name: true } } } },
       },
-      members: { include: { user: { select: { name: true } } } },
-    },
-  });
+    }),
+    prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.pack.findMany({
+      where: { ownerId: user.id },
+      include: { items: { select: { id: true } } },
+      orderBy: { updatedAt: "desc" },
+    }),
+  ]);
 
   if (!list) {
     notFound();
@@ -228,343 +270,418 @@ export default async function ListPage({
     ).map((p) => p.userId),
   );
 
-  const [categories, packs] = await Promise.all([
-    prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
-    prisma.pack.findMany({
-      where: { ownerId: user.id },
-      include: { items: { select: { id: true } } },
-      orderBy: { updatedAt: "desc" },
-    }),
-  ]);
-
   const todo = groupByCategory(list.items.filter((i) => !i.checked && !i.stored));
   const done = groupByCategory(list.items.filter((i) => i.checked && !i.stored));
   const stored = groupByCategory(list.items.filter((i) => i.stored));
   const active = list.items.filter((i) => !i.stored);
   const total = active.length;
   const completed = active.filter((i) => i.checked).length;
+  const percent = total ? Math.round((completed / total) * 100) : 0;
+
+  const suggestions = list.items
+    .filter((i) => !i.stored)
+    .map((i) => ({
+      name: i.name,
+      emoji: i.emoji,
+      quantity: i.quantity,
+      categoryId: i.categoryId,
+    }))
+    .filter(
+      (item, index, arr) =>
+        arr.findIndex((s) => s.name.toLowerCase() === item.name.toLowerCase()) ===
+        index,
+    );
+
+  const userLists = await prisma.list.findMany({
+    where: { members: { some: { userId: user.id } } },
+    select: { id: true, name: true, emoji: true, color: true },
+    orderBy: { updatedAt: "desc" },
+  });
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md px-4 pb-32 pt-6">
+    <AppShell
+      user={user}
+      lists={userLists}
+      packs={packs.map((p) => ({
+        id: p.id,
+        name: p.name,
+        emoji: p.emoji,
+        color: p.color,
+      }))}
+      activeListId={list.id}
+    >
       <ListRefresher
         listId={list.id}
         initialUpdatedAt={list.updatedAt.toISOString()}
         initialMembers={list.members.length}
         initialPresent={[...present].sort().join(",")}
       />
-      <header className="flex items-center gap-3">
-        <Link
-          href="/"
-          className="flex h-9 w-9 items-center justify-center rounded-md border border-line-strong text-text-2 hover:bg-surface-2"
-          aria-label="Torna alla home"
-        >
-          ←
-        </Link>
-        <div
-          className="flex h-10 w-10 items-center justify-center rounded-md text-2xl"
-          style={{ backgroundColor: `${list.color}1a` }}
-          aria-hidden
-        >
-          <IconImage emoji={list.emoji} className="h-8 w-8" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-bold text-text">{list.name}</h1>
-          <p className="tnum text-xs text-text-3">
-            {completed}/{total} fatti
-          </p>
+
+      {/* ===== Header ===== */}
+      <header className="page-header border-b border-line">
+        <div className="mx-auto w-full max-w-5xl px-4 pb-3 pt-3 sm:px-6 lg:px-10">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line-strong bg-surface text-lg text-text-2 shadow-sm hover:bg-subtle"
+              aria-label="Torna alla home"
+            >
+              ←
+            </Link>
+            <span
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl"
+              style={{ backgroundColor: `${list.color}1c` }}
+              aria-hidden
+            >
+              <IconImage emoji={list.emoji} className="h-9 w-9" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-lg font-extrabold tracking-tight text-text">
+                {list.name}
+              </h1>
+              <p className="tnum text-xs text-text-3">
+                {completed}/{total} fatti
+              </p>
+            </div>
+          </div>
+
+          {list.members.length > 1 ? (
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+              {list.members.map((member) => (
+                <span
+                  key={member.id}
+                  className="flex items-center gap-1.5 text-xs text-text-3"
+                >
+                  <span
+                    className={`h-2.5 w-2.5 rounded-full ${
+                      present.has(member.userId)
+                        ? "bg-emerald-500"
+                        : "bg-line-strong"
+                    }`}
+                    aria-hidden
+                  />
+                  <span className="truncate">
+                    {member.user.name}
+                    {member.userId === user.id ? " (tu)" : ""}
+                  </span>
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="mt-3 flex items-center gap-3">
+            <div className="progress-track h-2 flex-1">
+              <div
+                className="progress-fill h-full"
+                style={{
+                  width: `${percent}%`,
+                  backgroundColor: list.color,
+                }}
+              />
+            </div>
+            {canEdit && total > 0 ? (
+              <form action={emptyList}>
+                <input type="hidden" name="listId" value={list.id} />
+                <button
+                  type="submit"
+                  className="shrink-0 rounded-full border border-line-strong bg-surface px-3.5 py-1.5 text-xs font-semibold text-text-2 shadow-sm hover:bg-subtle"
+                >
+                  Svuota
+                </button>
+              </form>
+            ) : null}
+          </div>
+
+          {isOwner || (canEdit && packs.length > 0) ? (
+            <div className="mt-2.5 flex flex-wrap gap-2">
+              {isOwner ? (
+                <>
+                  <details className="group">
+                    <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-full border border-line-strong bg-surface px-3.5 py-2 text-sm font-semibold text-text-2 shadow-sm hover:bg-subtle [&::-webkit-details-marker]:hidden">
+                      🔗 Condividi
+                    </summary>
+                    <div className="card mt-2 flex w-full max-w-sm flex-col gap-2 p-4">
+                      {list.inviteCode ? (
+                        <>
+                          <p className="tnum rounded-xl border border-line-strong bg-subtle px-3 py-2 text-center font-mono text-sm font-bold tracking-widest text-accent-strong">
+                            {list.inviteCode}
+                          </p>
+                          <form action={clearInviteCode}>
+                            <input type="hidden" name="id" value={list.id} />
+                            <Button type="submit" variant="tertiary" size="sm" className="w-full">
+                              Disattiva codice
+                            </Button>
+                          </form>
+                        </>
+                      ) : (
+                        <form action={generateInviteCode}>
+                          <input type="hidden" name="id" value={list.id} />
+                          <Button type="submit" variant="primary" size="sm" className="w-full">
+                            Genera codice invito
+                          </Button>
+                        </form>
+                      )}
+                    </div>
+                  </details>
+
+                  <details className="group">
+                    <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-full border border-line-strong bg-surface px-3.5 py-2 text-sm font-semibold text-text-2 shadow-sm hover:bg-subtle [&::-webkit-details-marker]:hidden">
+                      ⚙️ Gestisci
+                    </summary>
+                    <div className="card mt-2 w-full max-w-sm p-4">
+                      {list.members.length > 1 ? (
+                        <ul className="divide-y divide-line-soft">
+                          {list.members.map((member) => (
+                            <li
+                              key={member.id}
+                              className="flex items-center gap-2 py-2 text-sm first:pt-0 last:pb-0"
+                            >
+                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-bold text-accent-strong">
+                                {member.user.name.charAt(0).toUpperCase()}
+                              </span>
+                              <span
+                                className={`h-2 w-2 shrink-0 rounded-full ${
+                                  present.has(member.userId)
+                                    ? "bg-emerald-500"
+                                    : "bg-line-strong"
+                                }`}
+                                aria-label={
+                                  present.has(member.userId)
+                                    ? `${member.user.name} è online`
+                                    : `${member.user.name} è assente`
+                                }
+                              />
+                              <span className="min-w-0 flex-1 truncate text-text">
+                                {member.user.name}
+                                {member.userId === user.id ? " (tu)" : ""}
+                              </span>
+                              {member.role === "owner" ? (
+                                <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-3">
+                                  proprietario
+                                </span>
+                              ) : (
+                                <>
+                                  <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-3">
+                                    {member.role === "editor"
+                                      ? "modifica"
+                                      : "sola lettura"}
+                                  </span>
+                                  <form action={setMemberRole}>
+                                    <input type="hidden" name="listId" value={list.id} />
+                                    <input type="hidden" name="memberId" value={member.id} />
+                                    <input
+                                      type="hidden"
+                                      name="role"
+                                      value={member.role === "editor" ? "viewer" : "editor"}
+                                    />
+                                    <button
+                                      type="submit"
+                                      className="rounded-full border border-line-strong px-2 py-1 text-[10px] font-semibold text-text-2 hover:bg-subtle"
+                                      aria-label="Cambia ruolo"
+                                    >
+                                      {member.role === "editor"
+                                        ? "→ sola lettura"
+                                        : "→ modifica"}
+                                    </button>
+                                  </form>
+                                  <form action={removeMember}>
+                                    <input type="hidden" name="listId" value={list.id} />
+                                    <input type="hidden" name="memberId" value={member.id} />
+                                    <button
+                                      type="submit"
+                                      className="flex h-7 w-7 items-center justify-center rounded-full text-text-3 hover:bg-negative-soft hover:text-negative"
+                                      aria-label={`Rimuovi ${member.user.name}`}
+                                    >
+                                      ✕
+                                    </button>
+                                  </form>
+                                </>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-xs text-text-3">
+                          Nessun altro membro: genera un codice invito per
+                          condividere la lista.
+                        </p>
+                      )}
+                      <form action={deleteList} className="mt-3">
+                        <input type="hidden" name="id" value={list.id} />
+                        <Button type="submit" variant="danger" size="sm" className="w-full">
+                          Elimina lista
+                        </Button>
+                      </form>
+                    </div>
+                  </details>
+                </>
+              ) : null}
+
+              {canEdit && packs.length > 0 ? (
+                <details className="group">
+                  <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-full border border-line-strong bg-surface px-3.5 py-2 text-sm font-semibold text-text-2 shadow-sm hover:bg-subtle [&::-webkit-details-marker]:hidden">
+                    🧳 Aggiungi pack
+                  </summary>
+                  <div className="card mt-2 grid w-full max-w-sm grid-cols-2 gap-2 p-4">
+                    {packs.map((pack) => (
+                      <form key={pack.id} action={insertPack}>
+                        <input type="hidden" name="listId" value={list.id} />
+                        <input type="hidden" name="packId" value={pack.id} />
+                        <Button type="submit" variant="secondary" size="sm" className="w-full justify-start">
+                          <span aria-hidden>{pack.emoji}</span>
+                          <span className="truncate">{pack.name}</span>
+                          <span className="tnum ml-auto text-xs text-text-3">
+                            {pack.items.length}
+                          </span>
+                        </Button>
+                      </form>
+                    ))}
+                  </div>
+                </details>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </header>
 
-      {list.members.length > 1 ? (
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-          {list.members.map((member) => (
-            <span
-              key={member.id}
-              className="flex items-center gap-1.5 text-xs text-text-3"
-            >
-              <span
-                className={`h-2 w-2 rounded-full ${present.has(member.userId) ? "bg-emerald-500" : "bg-line-strong"}`}
-                aria-hidden
-              />
-              <span className="truncate">
-                {member.user.name}
-                {member.userId === user.id ? " (tu)" : ""}
-              </span>
-            </span>
-          ))}
-        </div>
-      ) : null}
-
-      <div className="mt-3 flex items-center gap-3">
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
-          <div
-            className="h-full rounded-full transition-all"
-            style={{
-              width: total ? `${(completed / total) * 100}%` : "0%",
-              backgroundColor: list.color,
-            }}
-          />
-        </div>
-        {canEdit && total > 0 ? (
-          <form action={emptyList}>
-            <input type="hidden" name="listId" value={list.id} />
-            <button
-              type="submit"
-              className="shrink-0 rounded-md border border-line-strong px-2 py-1 text-xs font-medium text-text-2 hover:bg-surface-2"
-            >
-              Svuota
-            </button>
-          </form>
-        ) : null}
-      </div>
-
-      {isOwner ? (
-        <div className="mt-4 flex flex-wrap gap-2">
-          <details className="rounded-md border border-line bg-subtle px-3 py-1.5 text-sm">
-            <summary className="cursor-pointer list-none font-medium text-text-2 [&::-webkit-details-marker]:hidden">
-              🔗 Condividi
-            </summary>
-            <div className="mt-2 flex flex-col gap-2">
-              {list.inviteCode ? (
-                <>
-                  <p className="tnum rounded-md border border-line-strong bg-surface px-3 py-2 text-center font-mono text-sm font-semibold tracking-widest text-accent">
-                    {list.inviteCode}
-                  </p>
-                  <form action={clearInviteCode}>
-                    <input type="hidden" name="id" value={list.id} />
-                    <Button type="submit" variant="tertiary" size="sm" className="w-full">
-                      Disattiva codice
-                    </Button>
-                  </form>
-                </>
-              ) : (
-                <form action={generateInviteCode}>
-                  <input type="hidden" name="id" value={list.id} />
-                  <Button type="submit" variant="primary" size="sm" className="w-full">
-                    Genera codice invito
-                  </Button>
-                </form>
-              )}
-            </div>
-          </details>
-
-          <details className="rounded-md border border-line bg-subtle px-3 py-1.5 text-sm">
-            <summary className="cursor-pointer list-none font-medium text-text-2 [&::-webkit-details-marker]:hidden">
-              ⚙️ Gestisci
-            </summary>
-            <div className="mt-2 flex flex-col gap-2">
-              {list.members.length > 1 ? (
-                <ul className="rounded-md border border-line bg-surface">
-                  {list.members.map((member) => (
-                    <li
-                      key={member.id}
-                      className="flex items-center gap-2 border-b border-line-soft px-3 py-2 text-sm last:border-b-0"
-                    >
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-accent">
-                        {member.user.name.charAt(0).toUpperCase()}
-                      </span>
-                      <span
-                        className={`h-2 w-2 shrink-0 rounded-full ${present.has(member.userId) ? "bg-emerald-500" : "bg-line-strong"}`}
-                        aria-label={
-                          present.has(member.userId)
-                            ? `${member.user.name} è online`
-                            : `${member.user.name} è assente`
-                        }
-                      />
-                      <span className="min-w-0 flex-1 truncate text-text">
-                        {member.user.name}
-                        {member.userId === user.id ? " (tu)" : ""}
-                      </span>
-                      {member.role === "owner" ? (
-                        <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-3">
-                          proprietario
-                        </span>
-                      ) : (
-                        <>
-                          <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-3">
-                            {member.role === "editor" ? "modifica" : "sola lettura"}
-                          </span>
-                          <form action={setMemberRole}>
-                            <input type="hidden" name="listId" value={list.id} />
-                            <input type="hidden" name="memberId" value={member.id} />
-                            <input
-                              type="hidden"
-                              name="role"
-                              value={member.role === "editor" ? "viewer" : "editor"}
-                            />
-                            <button
-                              type="submit"
-                              className="rounded border border-line-strong px-1.5 py-0.5 text-[10px] font-medium text-text-2 hover:bg-surface-2"
-                              aria-label="Cambia ruolo"
-                            >
-                              {member.role === "editor" ? "→ sola lettura" : "→ modifica"}
-                            </button>
-                          </form>
-                          <form action={removeMember}>
-                            <input type="hidden" name="listId" value={list.id} />
-                            <input type="hidden" name="memberId" value={member.id} />
-                            <button
-                              type="submit"
-                              className="flex h-6 w-6 items-center justify-center rounded text-text-3 hover:bg-error/10 hover:text-error"
-                              aria-label={`Rimuovi ${member.user.name}`}
-                            >
-                              ✕
-                            </button>
-                          </form>
-                        </>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-xs text-text-3">
-                  Nessun altro membro: genera un codice invito per condividere la
-                  lista.
-                </p>
-              )}
-              <form action={deleteList}>
-                <input type="hidden" name="id" value={list.id} />
-                <Button type="submit" variant="danger" size="sm" className="w-full">
-                  Elimina lista
-                </Button>
-              </form>
-            </div>
-          </details>
-        </div>
-      ) : null}
-
-      <div className="mt-5 flex flex-col gap-6">
+      {/* ===== Contenuto ===== */}
+      <div className="mx-auto w-full max-w-5xl px-4 pb-40 pt-4 sm:px-6 lg:px-10 lg:pb-20">
         <section>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-[#d4554f]">
+          <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-text-3">
+            <span className="h-2 w-2 rounded-full bg-negative" aria-hidden />
             Da fare
+            <span className="tnum ml-auto rounded-full bg-surface px-2 py-0.5 text-[10px]">
+              {todo.reduce((n, g) => n + g.items.length, 0)}
+            </span>
           </h2>
-          <Card className="mt-2 p-3">
-            {todo.length === 0 ? (
-              <p className="py-2 text-center text-sm text-text-3">
-                Niente da fare! 🎉
+
+          {todo.length === 0 ? (
+            <div className="mt-4 flex flex-col items-center gap-2 px-6 py-10 text-center">
+              <span className="text-4xl" aria-hidden>
+                🎉
+              </span>
+              <p className="text-base font-bold text-text">Niente da fare!</p>
+              <p className="max-w-xs text-sm leading-6 text-text-3">
+                Tutto fatto. Aggiungi qualcosa o prendi una pausa.
               </p>
-            ) : (
-              todo.map((group) => (
-                <div key={group.key}>
-                  <p className="px-1 pb-1 pt-2 text-xs font-medium text-text-3">
+            </div>
+          ) : (
+            todo.map((group) => (
+              <div key={group.key} className="mt-3">
+                {todo.length > 1 ? (
+                  <p className="px-1 pb-2 text-sm font-semibold text-text-2">
                     {group.emoji} {group.name}
                   </p>
-                  <ul>
-                    {group.items.map((item) => (
-                      <ItemRow
-                        key={item.id}
-                        item={item}
-                        canEdit={canEdit}
-                        isOwner={isOwner}
-                      />
-                    ))}
-                  </ul>
-                </div>
-              ))
-            )}
-          </Card>
+                ) : null}
+                <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                  {group.items.map((item) => (
+                    <Tile
+                      key={item.id}
+                      item={item}
+                      canEdit={canEdit}
+                      isOwner={isOwner}
+                    />
+                  ))}
+                </ul>
+              </div>
+            ))
+          )}
         </section>
 
         {done.length > 0 ? (
-          <section>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-[#3e86b8]">
+          <section className="mt-8">
+            <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-text-3">
+              <span className="h-2 w-2 rounded-full bg-positive" aria-hidden />
               Fatto
+              <span className="tnum ml-auto rounded-full bg-surface px-2 py-0.5 text-[10px]">
+                {done.reduce((n, g) => n + g.items.length, 0)}
+              </span>
             </h2>
-            <Card className="mt-2 p-3">
-              {done.map((group) => (
-                <div key={group.key}>
-                  <p className="px-1 pb-1 pt-2 text-xs font-medium text-text-3">
+            {done.map((group) => (
+              <div key={group.key} className="mt-3">
+                {done.length > 1 ? (
+                  <p className="px-1 pb-2 text-sm font-semibold text-text-2">
                     {group.emoji} {group.name}
                   </p>
-                  <ul>
+                ) : null}
+                <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                  {group.items.map((item) => (
+                    <Tile
+                      key={item.id}
+                      item={item}
+                      canEdit={canEdit}
+                      isOwner={isOwner}
+                    />
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </section>
+        ) : null}
+
+        {stored.length > 0 ? (
+          <details className="group mt-8">
+            <summary className="flex cursor-pointer list-none items-center gap-2 rounded-2xl border border-line bg-surface px-4 py-3 text-sm font-semibold text-text-2 shadow-sm [&::-webkit-details-marker]:hidden">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-2" aria-hidden>
+                🗃️
+              </span>
+              Cassetto
+              <span className="tnum rounded-full bg-surface-2 px-2 py-0.5 text-[10px]">
+                {stored.reduce((n, g) => n + g.items.length, 0)}
+              </span>
+              <span className="ml-auto transition-transform group-open:rotate-180" aria-hidden>
+                ▾
+              </span>
+            </summary>
+            <div className="mt-3">
+              {stored.map((group) => (
+                <div key={group.key}>
+                  <p className="px-1 pb-2 text-sm font-semibold text-text-2">
+                    {group.emoji} {group.name}
+                  </p>
+                  <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                     {group.items.map((item) => (
-                      <ItemRow
+                      <Tile
                         key={item.id}
                         item={item}
                         canEdit={canEdit}
                         isOwner={isOwner}
+                        stored
                       />
                     ))}
                   </ul>
+                  {canEdit ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {group.items.map((item) => (
+                        <form key={item.id} action={restoreItem}>
+                          <input type="hidden" name="id" value={item.id} />
+                          <button
+                            type="submit"
+                            className="rounded-full border border-accent-line bg-accent-soft px-3.5 py-1.5 text-xs font-semibold text-accent-strong hover:bg-accent-soft"
+                          >
+                            Riprendi {item.name}
+                          </button>
+                        </form>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               ))}
-            </Card>
-          </section>
+            </div>
+          </details>
         ) : null}
       </div>
 
+      {/* ===== FAB ===== */}
       {canEdit ? (
-        <div className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface/95 backdrop-blur">
-          <div className="mx-auto max-w-md px-4 py-3">
-            <AddItemForm listId={list.id} categories={categories} />
-
-            {packs.length > 0 ? (
-              <details className="mt-2 rounded-md border border-line-strong bg-subtle">
-                <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm font-medium text-text-2 [&::-webkit-details-marker]:hidden">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-strong text-white">
-                    🧳
-                  </span>
-                  Aggiungi pack
-                </summary>
-                <div className="grid grid-cols-2 gap-2 p-3">
-                  {packs.map((pack) => (
-                    <form key={pack.id} action={insertPack}>
-                      <input type="hidden" name="listId" value={list.id} />
-                      <input type="hidden" name="packId" value={pack.id} />
-                      <Button type="submit" variant="secondary" size="sm" className="w-full justify-start">
-                        <span aria-hidden>{pack.emoji}</span>
-                        <span className="truncate">{pack.name}</span>
-                        <span className="tnum ml-auto text-xs text-text-3">
-                          {pack.items.length}
-                        </span>
-                      </Button>
-                    </form>
-                  ))}
-                </div>
-              </details>
-) : null}
-
-        {stored.length > 0 ? (
-          <section>
-            <details className="group rounded-md border border-line bg-subtle">
-              <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-text-3 [&::-webkit-details-marker]:hidden">
-                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-surface-2">
-                  🗃️
-                </span>
-                Cassetto
-                <span className="tnum rounded-full bg-surface-2 px-2 py-0.5 text-[10px]">
-                  {stored.reduce((n, g) => n + g.items.length, 0)}
-                </span>
-                <span className="ml-auto transition-transform group-open:rotate-180">
-                  ▾
-                </span>
-              </summary>
-              <div className="border-t border-line-soft p-3">
-                {stored.map((group) => (
-                  <div key={group.key}>
-                    <p className="px-1 pb-1 pt-2 text-xs font-medium text-text-3">
-                      {group.emoji} {group.name}
-                    </p>
-                    <ul>
-                      {group.items.map((item) => (
-                        <ItemRow
-                          key={item.id}
-                          item={item}
-                          canEdit={canEdit}
-                          isOwner={isOwner}
-                          stored
-                        />
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </details>
-          </section>
-        ) : null}
-      </div>
+        <div className="fixed bottom-5 right-4 z-40 lg:bottom-8 lg:right-8">
+          <ListAddSheet
+            listId={list.id}
+            categories={categories}
+            suggestions={suggestions}
+          />
         </div>
       ) : null}
-    </main>
+    </AppShell>
   );
 }

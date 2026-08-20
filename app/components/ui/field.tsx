@@ -11,8 +11,8 @@ export function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-sm font-medium text-text-2">{label}</span>
-      <div className="mt-2">{children}</div>
+      <span className="text-sm font-semibold text-text-2">{label}</span>
+      <div className="mt-1.5">{children}</div>
       {hint ? (
         <p className="mt-1.5 text-xs leading-5 text-text-3">{hint}</p>
       ) : null}

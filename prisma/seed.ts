@@ -81,8 +81,8 @@ const PACKS: Record<
 };
 
 const SEED_USERS = [
-  { name: "Fabio", email: "fabio", password: "cubetto" },
-  { name: "Carla", email: "carla", password: "cubetto" },
+  { name: "Fabio", email: "fabio", password: "cubetto", role: "admin" },
+  { name: "Carla", email: "carla", password: "cubetto", role: "user" },
 ] as const;
 
 async function main() {
@@ -109,6 +109,7 @@ async function main() {
         name: u.name,
         email: u.email,
         passwordHash: hashPassword(u.password),
+        role: u.role,
       },
     });
   }

@@ -1,16 +1,14 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { addPackItem, deletePack, deletePackItem } from "../../actions";
+import { deletePack, deletePackItem } from "../../actions";
 import { setPackItemImage, clearPackItemImage } from "../../images-actions";
 import { requireUser } from "../../auth";
 import { prisma } from "../../db";
 import { Button } from "../../components/ui/button";
-import { Card } from "../../components/ui/card";
-import { Field } from "../../components/ui/field";
-import { Input } from "../../components/ui/input";
 import { IconImage } from "../../components/icon-image";
-import { IconPicker } from "../../components/icon-picker";
 import { ImageUploadButton } from "../../components/image-upload";
+import { PackAddSheet } from "../../components/pack-add-sheet";
+import { AppShell } from "../../components/app-shell";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,99 +21,136 @@ export default async function PackPage({
   const user = await requireUser();
   const { id } = await params;
 
-  const pack = await prisma.pack.findUnique({
-    where: { id },
-    include: {
-      items: {
-        include: { category: { select: { id: true, name: true, emoji: true } } },
-        orderBy: { sortOrder: "asc" },
+  const [pack, categories, lists, packs] = await Promise.all([
+    prisma.pack.findUnique({
+      where: { id },
+      include: {
+        items: {
+          include: { category: { select: { id: true, name: true, emoji: true } } },
+          orderBy: { sortOrder: "asc" },
+        },
       },
-    },
-  });
+    }),
+    prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.list.findMany({
+      where: { members: { some: { userId: user.id } } },
+      select: { id: true, name: true, emoji: true, color: true },
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.pack.findMany({
+      where: { ownerId: user.id },
+      select: { id: true, name: true, emoji: true, color: true },
+      orderBy: { updatedAt: "desc" },
+    }),
+  ]);
 
   if (!pack || pack.ownerId !== user.id) {
     notFound();
   }
 
-  const categories = await prisma.category.findMany({
-    orderBy: { sortOrder: "asc" },
-  });
+  const suggestions = pack.items
+    .map((item) => ({
+      name: item.name,
+      emoji: item.emoji,
+      quantity: item.quantity,
+      categoryId: item.categoryId,
+    }))
+    .filter(
+      (item, index, arr) =>
+        arr.findIndex((s) => s.name.toLowerCase() === item.name.toLowerCase()) ===
+        index,
+    );
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md px-4 pb-32 pt-6">
-      <header className="flex items-center gap-3">
-        <Link
-          href="/"
-          className="flex h-9 w-9 items-center justify-center rounded-md border border-line-strong text-text-2 hover:bg-surface-2"
-          aria-label="Torna alla home"
-        >
-          ←
-        </Link>
-        <div
-          className="flex h-10 w-10 items-center justify-center rounded-md text-2xl"
-          style={{ backgroundColor: `${pack.color}1a` }}
-          aria-hidden
-        >
-          <IconImage emoji={pack.emoji} className="h-8 w-8" />
+    <AppShell
+      user={user}
+      lists={lists}
+      packs={packs}
+      activePackId={pack.id}
+    >
+      <header className="page-header border-b border-line">
+        <div className="mx-auto w-full max-w-5xl px-4 pb-3 pt-3 sm:px-6 lg:px-10">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line-strong bg-surface text-lg text-text-2 shadow-sm hover:bg-subtle"
+              aria-label="Torna alla home"
+            >
+              ←
+            </Link>
+            <span
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl"
+              style={{ backgroundColor: `${pack.color}1c` }}
+              aria-hidden
+            >
+              <IconImage emoji={pack.emoji} className="h-9 w-9" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-lg font-extrabold tracking-tight text-text">
+                {pack.name}
+              </h1>
+              <p className="tnum text-xs text-text-3">
+                {pack.items.length} elementi
+              </p>
+            </div>
+            <form action={deletePack}>
+              <input type="hidden" name="id" value={pack.id} />
+              <Button type="submit" variant="danger" size="sm">
+                Elimina
+              </Button>
+            </form>
+          </div>
         </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-bold text-text">{pack.name}</h1>
-          <p className="tnum text-xs text-text-3">
-            {pack.items.length} elementi
-          </p>
-        </div>
-        <form action={deletePack}>
-          <input type="hidden" name="id" value={pack.id} />
-          <Button type="submit" variant="danger" size="sm">
-            Elimina
-          </Button>
-        </form>
       </header>
 
-      <Card className="mt-5 p-3">
+      <div className="mx-auto w-full max-w-5xl px-4 pb-40 pt-4 sm:px-6 lg:px-10 lg:pb-20">
         {pack.items.length === 0 ? (
-          <p className="py-2 text-center text-sm text-text-3">
-            Pack vuoto: aggiungi i tuoi elementi qui sotto.
-          </p>
+          <div className="mt-6 flex flex-col items-center gap-3 px-6 py-12 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-accent-soft text-3xl" aria-hidden>
+              🧳
+            </span>
+            <p className="text-lg font-bold text-text">Pack vuoto</p>
+            <p className="max-w-xs text-sm leading-6 text-text-3">
+              Aggiungi i tuoi elementi: li riuserai in ogni lista con un tap.
+            </p>
+          </div>
         ) : (
-          <ul>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {pack.items.map((item) => (
-              <li
-                key={item.id}
-                className="flex items-center gap-2.5 border-b border-line-soft py-2 last:border-b-0"
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface-2 text-xl">
-                  {item.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={item.imageUrl}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <IconImage emoji={item.emoji} className="h-7 w-7" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-text">
-                    {item.name}
-                  </p>
-                  <p className="text-xs text-text-3">
-                    {item.category
-                      ? `${item.category.emoji} ${item.category.name}`
-                      : "Senza categoria"}
-                    {item.quantity > 1 ? ` · ×${item.quantity}` : ""}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1">
+              <div key={item.id} className="tile relative p-3">
+                <span className="flex items-start justify-between">
+                  <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-surface-2 text-2xl">
+                    {item.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={item.imageUrl}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <IconImage emoji={item.emoji} className="h-8 w-8" />
+                    )}
+                  </span>
+                </span>
+                <p className="mt-2 truncate text-sm font-semibold text-text">
+                  {item.name}
+                </p>
+                <p className="tnum mt-0.5 truncate text-xs text-text-3">
+                  {item.category
+                    ? `${item.category.emoji} ${item.category.name}`
+                    : "Senza categoria"}
+                  {item.quantity > 1 ? ` · ×${item.quantity}` : ""}
+                </p>
+
+                <div className="absolute right-2 top-2 flex items-center gap-1">
                   <ImageUploadButton action={setPackItemImage} itemId={item.id} />
                   {item.imageUrl ? (
                     <form action={clearPackItemImage}>
                       <input type="hidden" name="id" value={item.id} />
                       <button
                         type="submit"
-                        className="flex h-7 w-7 items-center justify-center rounded text-text-3 hover:bg-error/10 hover:text-error"
                         aria-label="Rimuovi foto"
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-xs text-text-3 shadow-sm hover:bg-negative-soft hover:text-negative"
                       >
                         ✕
                       </button>
@@ -125,73 +160,26 @@ export default async function PackPage({
                     <input type="hidden" name="id" value={item.id} />
                     <button
                       type="submit"
-                      className="flex h-7 w-7 items-center justify-center rounded text-text-3 hover:bg-error/10 hover:text-error"
                       aria-label={`Elimina ${item.name}`}
+                      className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-sm text-text-3 shadow-sm hover:bg-negative-soft hover:text-negative"
                     >
                       🗑
                     </button>
                   </form>
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
-      </Card>
-
-      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface/95 backdrop-blur">
-        <div className="mx-auto max-w-md px-4 py-3">
-          <details className="rounded-md border border-line-strong bg-subtle">
-            <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm font-medium text-text-2 [&::-webkit-details-marker]:hidden">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-white">
-                ＋
-              </span>
-              Aggiungi elemento
-            </summary>
-            <form action={addPackItem} className="flex flex-col gap-3 p-3">
-              <input type="hidden" name="packId" value={pack.id} />
-              <div className="flex gap-2">
-                <IconPicker initial="📦" />
-                <Field label="Nome">
-                  <Input
-                    name="name"
-                    type="text"
-                    required
-                    placeholder="es. Asciugamano"
-                  />
-                </Field>
-              </div>
-              <div className="flex gap-2">
-                <Field label="Quantità">
-                  <Input
-                    name="quantity"
-                    type="number"
-                    min={1}
-                    max={999}
-                    defaultValue={1}
-                    className="min-h-9 w-20"
-                  />
-                </Field>
-                <Field label="Categoria">
-                  <select
-                    name="categoryId"
-                    className="min-h-9 w-full rounded-md border border-line-strong bg-subtle px-2 py-1.5 text-sm text-text outline-none focus:border-accent"
-                  >
-                    <option value="">Senza categoria</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.emoji} {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-              </div>
-              <Button type="submit" variant="primary">
-                Aggiungi
-              </Button>
-            </form>
-          </details>
-        </div>
       </div>
-    </main>
+
+      <div className="fixed bottom-5 right-4 z-40 lg:bottom-8 lg:right-8">
+        <PackAddSheet
+          packId={pack.id}
+          categories={categories}
+          suggestions={suggestions}
+        />
+      </div>
+    </AppShell>
   );
 }

@@ -2,11 +2,10 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "../auth";
 import { login } from "../auth-actions";
+import { prisma } from "../db";
 import { Button } from "../components/ui/button";
-import { Card } from "../components/ui/card";
 import { Field } from "../components/ui/field";
 import { Input } from "../components/ui/input";
-import packageJson from "../../package.json";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,59 +21,60 @@ export default async function LoginPage({
     redirect("/");
   }
 
+  const userCount = await prisma.user.count();
+
+  if (userCount === 0) {
+    redirect("/setup");
+  }
+
   const { error } = await searchParams;
   const errorMessage =
     error === "invalid" ? "Email o password non corretti." : null;
 
   return (
-    <main className="flex min-h-dvh items-start justify-center px-4 pb-16 pt-14 sm:pt-20">
-      <div className="w-full max-w-md">
-        <div className="flex items-center justify-between">
-          <span className="text-xl font-bold text-text">
-            <span aria-hidden>🧳</span> Cubetto
+    <main className="flex min-h-dvh items-center justify-center px-5 pb-16 pt-14 sm:pt-20">
+      <div className="w-full max-w-sm">
+        <div className="flex flex-col items-center text-center">
+          <span
+            className="flex h-16 w-16 items-center justify-center rounded-3xl bg-accent-soft text-3xl"
+            aria-hidden
+          >
+            🧳
           </span>
-          <span className="tnum text-xs text-text-3">
-            v{packageJson.version}
-          </span>
+          <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-text">
+            Cubetto
+          </h1>
+          <p className="mt-1 text-sm text-text-3">
+            Liste e pack per spesa e valigia.
+          </p>
         </div>
 
-        <header className="mt-10">
-          <h1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">
-            Accedi
-          </h1>
-          <p className="mt-3 text-base leading-6 text-text-2">
-            Liste versatili con pack riusabili: spesa, valigia e tutto il
-            resto.
-          </p>
-        </header>
-
-        <Card className="mt-6">
-          <form action={login}>
+        <div className="card mt-8 p-6">
+          <h2 className="text-lg font-bold text-text">Accedi</h2>
+          <form action={login} className="mt-4 flex flex-col gap-4">
             {errorMessage ? (
-              <p className="mb-5 rounded-md border border-error/40 bg-error/10 px-3 py-2 text-sm text-error">
+              <p className="rounded-xl border border-negative/30 bg-negative-soft px-3 py-2 text-sm text-negative">
                 {errorMessage}
               </p>
             ) : null}
 
             <Field label="Email o nome utente">
-              <Input name="email" type="text" required autoFocus />
+              <Input name="email" type="text" required autoFocus autoComplete="username" />
             </Field>
 
-            <div className="mt-4">
-              <Field label="Password">
-                <Input name="password" type="password" required />
-              </Field>
-            </div>
+            <Field label="Password">
+              <Input name="password" type="password" required autoComplete="current-password" />
+            </Field>
 
-            <Button type="submit" variant="primary" className="mt-6 w-full">
+            <Button type="submit" variant="primary" className="mt-1 w-full">
               Entra
             </Button>
           </form>
-        </Card>
+        </div>
 
-        <p className="mt-5 rounded-lg border border-line bg-subtle px-4 py-3 text-sm leading-6 text-text-3">
+        <p className="mt-5 text-center text-sm text-text-3">
           Non hai un account?{" "}
-          <Link href="/register" className="font-semibold text-accent">
+          <Link href="/register" className="font-semibold text-accent-strong">
             Registrati
           </Link>
         </p>
