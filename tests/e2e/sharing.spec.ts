@@ -45,11 +45,15 @@ test("condivisione: invito, join e sola lettura", async ({ browser }) => {
     await expect(guest.getByText("Latte")).toBeVisible();
     await expect(guest.getByRole("button", { name: "Fatto" })).toBeVisible();
 
+    await owner.getByText("Gestisci").click();
+    await expect(owner.locator('span[aria-label*="è online"]')).toHaveCount(2);
+    await expect(guest.locator("span.bg-emerald-500")).toHaveCount(2);
+
     await owner.reload();
     await owner.getByText("Gestisci").click();
     await Promise.all([
       owner.waitForResponse(
-        (r) => r.request().method() === "POST" && r.url().includes("/lists/"),
+        (r) => r.request().method() === "POST" && r.url().includes("/lists/") && !r.url().includes("/api/"),
       ),
       owner.getByRole("button", { name: "Cambia ruolo" }).click(),
     ]);
@@ -62,7 +66,7 @@ test("condivisione: invito, join e sola lettura", async ({ browser }) => {
     await owner.getByText("Gestisci").click();
     await Promise.all([
       owner.waitForResponse(
-        (r) => r.request().method() === "POST" && r.url().includes("/lists/"),
+        (r) => r.request().method() === "POST" && r.url().includes("/lists/") && !r.url().includes("/api/"),
       ),
       owner.getByRole("button", { name: "Cambia ruolo" }).click(),
     ]);

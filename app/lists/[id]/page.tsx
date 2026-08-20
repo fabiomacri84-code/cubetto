@@ -214,6 +214,20 @@ export default async function ListPage({
   const isOwner = membership.role === "owner";
   const canEdit = membership.role !== "viewer";
 
+  const PRESENCE_WINDOW_MS = 15_000;
+  const present = new Set(
+    (
+      await prisma.presence.findMany({
+        where: {
+          listId: id,
+          // eslint-disable-next-line react-hooks/purity -- RSC eseguito a ogni richiesta
+          updatedAt: { gt: new Date(Date.now() - PRESENCE_WINDOW_MS) },
+        },
+        select: { userId: true },
+      })
+    ).map((p) => p.userId),
+  );
+
   const [categories, packs] = await Promise.all([
     prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.pack.findMany({
@@ -232,7 +246,12 @@ export default async function ListPage({
 
   return (
     <main className="mx-auto min-h-dvh max-w-md px-4 pb-32 pt-6">
-      <ListRefresher listId={list.id} />
+      <ListRefresher
+        listId={list.id}
+        initialUpdatedAt={list.updatedAt.toISOString()}
+        initialMembers={list.members.length}
+        initialPresent={[...present].sort().join(",")}
+      />
       <header className="flex items-center gap-3">
         <Link
           href="/"
@@ -255,6 +274,26 @@ export default async function ListPage({
           </p>
         </div>
       </header>
+
+      {list.members.length > 1 ? (
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+          {list.members.map((member) => (
+            <span
+              key={member.id}
+              className="flex items-center gap-1.5 text-xs text-text-3"
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${present.has(member.userId) ? "bg-emerald-500" : "bg-line-strong"}`}
+                aria-hidden
+              />
+              <span className="truncate">
+                {member.user.name}
+                {member.userId === user.id ? " (tu)" : ""}
+              </span>
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       <div className="mt-3 flex items-center gap-3">
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
@@ -324,6 +363,14 @@ export default async function ListPage({
                       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-accent">
                         {member.user.name.charAt(0).toUpperCase()}
                       </span>
+                      <span
+                        className={`h-2 w-2 shrink-0 rounded-full ${present.has(member.userId) ? "bg-emerald-500" : "bg-line-strong"}`}
+                        aria-label={
+                          present.has(member.userId)
+                            ? `${member.user.name} è online`
+                            : `${member.user.name} è assente`
+                        }
+                      />
                       <span className="min-w-0 flex-1 truncate text-text">
                         {member.user.name}
                         {member.userId === user.id ? " (tu)" : ""}

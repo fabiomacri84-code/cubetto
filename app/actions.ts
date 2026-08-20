@@ -24,6 +24,13 @@ async function getUser() {
   return requireUser();
 }
 
+async function touchList(listId: string) {
+  await prisma.list.update({
+    where: { id: listId },
+    data: { updatedAt: new Date() },
+  });
+}
+
 /* ---------- Liste ---------- */
 
 export async function createList(formData: FormData) {
@@ -135,6 +142,7 @@ export async function addItem(
     },
   });
 
+  await touchList(listId);
   revalidatePath(`/lists/${listId}`);
   return { ok: true };
 }
@@ -162,6 +170,7 @@ export async function toggleItem(formData: FormData) {
     data: { checked: !item.checked },
   });
 
+  await touchList(item.listId);
   revalidatePath(`/lists/${item.listId}`);
 }
 
@@ -190,6 +199,7 @@ export async function setItemQuantity(formData: FormData) {
     data: { quantity: Math.min(quantity, 999) },
   });
 
+  await touchList(item.listId);
   revalidatePath(`/lists/${item.listId}`);
 }
 
@@ -212,6 +222,7 @@ export async function deleteItem(formData: FormData) {
   }
 
   await prisma.item.delete({ where: { id: itemId } });
+  await touchList(item.listId);
   revalidatePath(`/lists/${item.listId}`);
 }
 
@@ -233,6 +244,7 @@ export async function emptyList(formData: FormData) {
     data: { stored: true },
   });
 
+  await touchList(listId);
   revalidatePath(`/lists/${listId}`);
 }
 
@@ -259,6 +271,7 @@ export async function restoreItem(formData: FormData) {
     data: { stored: false, checked: false },
   });
 
+  await touchList(item.listId);
   revalidatePath(`/lists/${item.listId}`);
 }
 
@@ -422,6 +435,7 @@ export async function insertPack(formData: FormData) {
     ),
   );
 
+  await touchList(listId);
   revalidatePath(`/lists/${listId}`);
 }
 

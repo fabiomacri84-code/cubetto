@@ -28,6 +28,7 @@ model User {
   sessions     Session[]
   ownedLists   List[]       @relation("OwnedLists")
   memberships  ListMember[]
+  presences    Presence[]
   packs        Pack[]
 }
 
@@ -50,6 +51,7 @@ model List {
   ownerId    String
   owner      User         @relation("OwnedLists", fields: [ownerId], references: [id], onDelete: Cascade)
   members    ListMember[]
+  presences  Presence[]
   items      Item[]
 
   @@index([ownerId])
@@ -75,6 +77,18 @@ model Category {
   sortOrder Int         @default(0)
   items     Item[]
   packItems PackItem[]
+}
+
+model Presence {
+  id        String   @id @default(uuid())
+  listId    String
+  userId    String
+  updatedAt DateTime @updatedAt
+  list      List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, userId])
+  @@index([listId, updatedAt])
 }
 
 model Item {

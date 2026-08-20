@@ -64,6 +64,10 @@ export async function setItemImage(formData: FormData) {
     data: { imageUrl: `/api/files/${storedName}`, imageSource: "manual" },
   });
 
+  await prisma.list.update({
+    where: { id: item.listId },
+    data: { updatedAt: new Date() },
+  });
   revalidatePath(`/lists/${item.listId}`);
 }
 
@@ -89,6 +93,10 @@ export async function clearItemImage(formData: FormData) {
     data: { imageUrl: null, imageSource: "emoji" },
   });
 
+  await prisma.list.update({
+    where: { id: item.listId },
+    data: { updatedAt: new Date() },
+  });
   revalidatePath(`/lists/${item.listId}`);
 }
 
