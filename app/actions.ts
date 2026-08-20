@@ -156,7 +156,8 @@ export async function toggleItem(formData: FormData) {
   });
 
   if (!item) {
-    throw new Error("Elemento non trovato.");
+    revalidatePath("/");
+    return;
   }
 
   const member = item.list.members.find((m) => m.userId === user.id);
@@ -183,7 +184,8 @@ export async function setItemQuantity(formData: FormData) {
   });
 
   if (!item) {
-    throw new Error("Elemento non trovato.");
+    revalidatePath("/");
+    return;
   }
 
   const member = item.list.members.find((m) => m.userId === user.id);
@@ -212,7 +214,8 @@ export async function deleteItem(formData: FormData) {
   });
 
   if (!item) {
-    throw new Error("Elemento non trovato.");
+    revalidatePath("/");
+    return;
   }
 
   const member = item.list.members.find((m) => m.userId === user.id);
@@ -257,7 +260,8 @@ export async function restoreItem(formData: FormData) {
   });
 
   if (!item) {
-    throw new Error("Elemento non trovato.");
+    revalidatePath("/");
+    return;
   }
 
   const member = item.list.members.find((m) => m.userId === user.id);

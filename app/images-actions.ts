@@ -46,7 +46,8 @@ export async function setItemImage(formData: FormData) {
   });
 
   if (!item) {
-    throw new Error("Elemento non trovato.");
+    revalidatePath("/");
+    return;
   }
 
   if (item.list.ownerId !== user.id) {
@@ -81,7 +82,8 @@ export async function clearItemImage(formData: FormData) {
   });
 
   if (!item) {
-    throw new Error("Elemento non trovato.");
+    revalidatePath("/");
+    return;
   }
 
   if (item.list.ownerId !== user.id) {

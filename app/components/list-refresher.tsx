@@ -25,6 +25,15 @@ export function ListRefresher({
     members: initialMembers,
     present: initialPresent,
   });
+  const lastRefresh = useRef(0);
+
+  useEffect(() => {
+    snapshot.current = {
+      updatedAt: initialUpdatedAt,
+      members: initialMembers,
+      present: initialPresent,
+    };
+  }, [initialUpdatedAt, initialMembers, initialPresent]);
 
   useEffect(() => {
     const heartbeat = async () => {
@@ -93,7 +102,12 @@ export function ListRefresher({
           next.members !== snapshot.current.members ||
           next.present !== snapshot.current.present
         ) {
-          router.refresh();
+          // Se una azione dell'utente ha appena ri-renderizzato la pagina,
+          // evita un refresh ridondante che può far lampeggiare/duplicare la UI.
+          if (Date.now() - lastRefresh.current > 1500) {
+            lastRefresh.current = Date.now();
+            router.refresh();
+          }
         }
 
         snapshot.current = next;

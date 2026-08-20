@@ -1,4 +1,4 @@
-const CACHE = "cubetto-v1";
+const CACHE = "cubetto-v2";
 const CORE_ASSETS = [
   "/",
   "/manifest.webmanifest",
@@ -19,9 +19,9 @@ self.addEventListener("activate", (event) => {
       .keys()
       .then((keys) =>
         Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))),
-      ),
+      )
+      .then(() => self.clients.claim()),
   );
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
@@ -37,11 +37,40 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // API: sempre rete
   if (url.pathname.startsWith("/api/")) {
     event.respondWith(fetch(request));
     return;
   }
 
+  // Payload RSC / navigazioni client di Next.js: sempre rete, mai cache
+  if (
+    request.headers.get("rsc") === "1" ||
+    request.headers.get("next-router-state-tree") ||
+    request.headers.get("next-router-prefetch") ||
+    request.headers.get("next-router-segment-prefetch")
+  ) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Asset statici immutabili di Next: cache-first
+  if (url.pathname.startsWith("/_next/static/")) {
+    event.respondWith(
+      caches.match(request).then(
+        (cached) =>
+          cached ??
+          fetch(request).then((response) => {
+            const copy = response.clone();
+            caches.open(CACHE).then((cache) => cache.put(request, copy));
+            return response;
+          }),
+      ),
+    );
+    return;
+  }
+
+  // Navigazioni: network-first con fallback alla shell per l'offline
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
@@ -55,6 +84,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Altri GET (manifest, icone): cache-first
   event.respondWith(
     caches.match(request).then(
       (cached) =>
