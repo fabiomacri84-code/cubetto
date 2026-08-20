@@ -42,6 +42,14 @@ export default async function Home() {
           <span aria-hidden>🧳</span> Cubetto
         </span>
         <div className="flex items-center gap-2">
+          <Link
+            href="/settings"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-subtle text-text-2 hover:bg-surface-2"
+            aria-label="Impostazioni"
+            title="Impostazioni"
+          >
+            ⚙️
+          </Link>
           <span className="rounded-full border border-line bg-subtle px-3 py-1 text-xs font-medium text-text-2">
             {user.name}
           </span>

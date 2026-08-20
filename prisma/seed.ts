@@ -80,9 +80,14 @@ const PACKS: Record<
   ],
 };
 
+const SEED_USERS = [
+  { name: "Fabio", email: "fabio", password: "cubetto" },
+  { name: "Carla", email: "carla", password: "cubetto" },
+] as const;
+
 async function main() {
   const existing = await prisma.user.findUnique({
-    where: { email: "demo@cubetto.app" },
+    where: { email: "fabio" },
   });
 
   if (existing) {
@@ -98,12 +103,18 @@ async function main() {
     categories[cat.name] = created;
   }
 
-  const user = await prisma.user.create({
-    data: {
-      name: "Demo",
-      email: "demo@cubetto.app",
-      passwordHash: hashPassword("demo1234"),
-    },
+  for (const u of SEED_USERS) {
+    await prisma.user.create({
+      data: {
+        name: u.name,
+        email: u.email,
+        passwordHash: hashPassword(u.password),
+      },
+    });
+  }
+
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { email: "fabio" },
   });
 
   const createList = async (
@@ -173,7 +184,7 @@ async function main() {
   }
 
   console.log(
-    "Seed completato: utente demo@cubetto.app / demo1234, categorie, liste e pack creati.",
+    "Seed completato: utenti fabio / carla (password: cubetto), categorie, liste e pack creati.",
   );
 }
 

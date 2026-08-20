@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import {
   createSession,
   deleteSession,
+  getCurrentUser,
   hashPassword,
   normalizeEmail,
   verifyPassword,
@@ -33,8 +34,8 @@ export async function register(formData: FormData) {
     throw new Error("Il nome è obbligatorio.");
   }
 
-  if (!email || !email.includes("@")) {
-    throw new Error("Inserisci un'email valida.");
+  if (!email) {
+    throw new Error("Inserisci un nome utente o un'email valida.");
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -81,4 +82,40 @@ export async function login(formData: FormData) {
 export async function logout() {
   await deleteSession();
   redirect("/login");
+}
+
+export async function changePassword(formData: FormData) {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const currentPassword = String(formData.get("currentPassword") ?? "");
+  const newPassword = String(formData.get("newPassword") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (newPassword.length < 8) {
+    redirect("/settings?error=short");
+  }
+
+  if (newPassword !== confirmPassword) {
+    redirect("/settings?error=mismatch");
+  }
+
+  const stored = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { passwordHash: true },
+  });
+
+  if (!stored || !verifyPassword(currentPassword, stored.passwordHash)) {
+    redirect("/settings?error=wrong");
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordHash: hashPassword(newPassword) },
+  });
+
+  redirect("/settings?changed=1");
 }

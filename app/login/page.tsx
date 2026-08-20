@@ -56,13 +56,13 @@ export default async function LoginPage({
               </p>
             ) : null}
 
-            <Field label="Email">
-              <Input name="email" type="email" required autoFocus />
+            <Field label="Email o nome utente">
+              <Input name="email" type="text" required autoFocus />
             </Field>
 
             <div className="mt-4">
               <Field label="Password">
-                <Input name="password" type="password" required minLength={8} />
+                <Input name="password" type="password" required />
               </Field>
             </div>
 

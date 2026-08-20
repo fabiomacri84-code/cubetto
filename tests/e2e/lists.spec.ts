@@ -6,8 +6,8 @@ test("crea lista, aggiunge elementi e spunta (rosso → blu)", async ({ page }) 
   const email = `lista-${Date.now()}@cubetto.app`;
 
   await page.goto("/register");
-  await page.getByLabel("Nome").fill("Lista Test");
-  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Nome", { exact: true }).fill("Lista Test");
+  await page.getByLabel("Email o nome utente", { exact: true }).fill(email);
   await page.getByLabel("Password").fill("password123");
   await page.getByRole("button", { name: "Crea account" }).click();
 
@@ -18,12 +18,12 @@ test("crea lista, aggiunge elementi e spunta (rosso → blu)", async ({ page }) 
   await expect(page.getByRole("heading", { name: "Spesa del sabato" })).toBeVisible();
 
   await page.getByText("Aggiungi elemento").click();
-  await page.getByLabel("Nome").fill("Mele");
+  await page.getByLabel("Nome", { exact: true }).fill("Mele");
   await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
   await expect(page.getByText("Mele")).toBeVisible();
 
   await page.getByText("Aggiungi elemento").click();
-  await page.getByLabel("Nome").fill("Banane");
+  await page.getByLabel("Nome", { exact: true }).fill("Banane");
   await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
 
   const row = page.getByText("Mele");
@@ -42,8 +42,8 @@ test("quantità e inserimento pack", async ({ page }) => {
   const email = `pack-${Date.now()}@cubetto.app`;
 
   await page.goto("/register");
-  await page.getByLabel("Nome").fill("Pack Test");
-  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Nome", { exact: true }).fill("Pack Test");
+  await page.getByLabel("Email o nome utente", { exact: true }).fill(email);
   await page.getByLabel("Password").fill("password123");
   await page.getByRole("button", { name: "Crea account" }).click();
 
@@ -52,7 +52,7 @@ test("quantità e inserimento pack", async ({ page }) => {
   await page.getByRole("button", { name: "Crea pack" }).click();
 
   await page.getByText("Aggiungi elemento").click();
-  await page.getByLabel("Nome").fill("Spazzolino");
+  await page.getByLabel("Nome", { exact: true }).fill("Spazzolino");
   await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
   await expect(page.getByText("Spazzolino")).toBeVisible();
 
@@ -70,8 +70,8 @@ test("svuota la lista nel cassetto e riprende gli item", async ({ page }) => {
   const email = `svuota-${Date.now()}@cubetto.app`;
 
   await page.goto("/register");
-  await page.getByLabel("Nome").fill("Svuota Test");
-  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Nome", { exact: true }).fill("Svuota Test");
+  await page.getByLabel("Email o nome utente", { exact: true }).fill(email);
   await page.getByLabel("Password").fill("password123");
   await page.getByRole("button", { name: "Crea account" }).click();
 
@@ -80,12 +80,12 @@ test("svuota la lista nel cassetto e riprende gli item", async ({ page }) => {
   await page.getByRole("button", { name: "Crea lista" }).click();
 
   await page.getByText("Aggiungi elemento").click();
-  await page.getByLabel("Nome").fill("Mele");
+  await page.getByLabel("Nome", { exact: true }).fill("Mele");
   await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
   await expect(page.getByText("Mele")).toBeVisible();
 
   await page.getByText("Aggiungi elemento").click();
-  await page.getByLabel("Nome").fill("Banane");
+  await page.getByLabel("Nome", { exact: true }).fill("Banane");
   await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
   await expect(page.getByText("Banane")).toBeVisible();
 

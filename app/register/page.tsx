@@ -62,8 +62,8 @@ export default async function RegisterPage({
             </Field>
 
             <div className="mt-4">
-              <Field label="Email">
-                <Input name="email" type="email" required />
+              <Field label="Email o nome utente">
+                <Input name="email" type="text" required />
               </Field>
             </div>
 

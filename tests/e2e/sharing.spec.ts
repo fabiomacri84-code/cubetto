@@ -12,8 +12,8 @@ test("condivisione: invito, join e sola lettura", async ({ browser }) => {
 
   try {
     await owner.goto("/register");
-    await owner.getByLabel("Nome").fill("Owner");
-    await owner.getByLabel("Email").fill(ownerEmail);
+    await owner.getByLabel("Nome", { exact: true }).fill("Owner");
+    await owner.getByLabel("Email o nome utente", { exact: true }).fill(ownerEmail);
     await owner.getByLabel("Password").fill(password);
     await owner.getByRole("button", { name: "Crea account" }).click();
 
@@ -22,7 +22,7 @@ test("condivisione: invito, join e sola lettura", async ({ browser }) => {
     await owner.getByRole("button", { name: "Crea lista" }).click();
 
     await owner.getByText("Aggiungi elemento").click();
-    await owner.getByLabel("Nome").fill("Latte");
+    await owner.getByLabel("Nome", { exact: true }).fill("Latte");
     await owner.getByRole("button", { name: "Aggiungi", exact: true }).click();
     await expect(owner.getByText("Latte")).toBeVisible();
 
@@ -33,8 +33,8 @@ test("condivisione: invito, join e sola lettura", async ({ browser }) => {
     ).trim().toUpperCase();
 
     await guest.goto("/register");
-    await guest.getByLabel("Nome").fill("Guest");
-    await guest.getByLabel("Email").fill(guestEmail);
+    await guest.getByLabel("Nome", { exact: true }).fill("Guest");
+    await guest.getByLabel("Email o nome utente", { exact: true }).fill(guestEmail);
     await guest.getByLabel("Password").fill(password);
     await guest.getByRole("button", { name: "Crea account" }).click();
 

@@ -40,12 +40,14 @@ npm run test:e2e              # test end-to-end (Playwright)
 npm run lint && npm run typecheck
 ```
 
-## Utenti demo (seed)
+## Utenti seed
 
-| Ruolo | Email | Password |
-| --- | --- | --- |
-| Utente | `demo@cubetto.app` | `demo1234` |
-| Utente | `maria@cubetto.app` | `maria1234` |
+| Nome utente | Password |
+| --- | --- |
+| `fabio` | `cubetto` |
+| `carla` | `cubetto` |
+
+Puoi accedere con il nome utente (o un'email) e cambiare la password dalla pagina *Impostazioni*.
 
 ## Struttura
 
