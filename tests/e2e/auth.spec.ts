@@ -70,10 +70,15 @@ test("l'admin gestisce le utenze", async ({ page }) => {
   await page.getByRole("button", { name: "Entra" }).click();
   await expect(page.getByRole("heading", { name: "Le mie liste" })).toBeVisible();
 
-  await page.getByRole("link", { name: "Amministrazione" }).click();
-  await expect(page.getByRole("heading", { name: "Amministrazione" })).toBeVisible();
+  await page.getByRole("link", { name: "Impostazioni" }).click();
+  await expect(page.getByRole("heading", { name: "Impostazioni" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Gestione utenti" }),
+  ).toBeVisible();
 
-  const createForm = page.locator("form").first();
+  const createForm = page
+    .locator("form")
+    .filter({ has: page.getByRole("button", { name: "Crea utente" }) });
   await createForm.getByLabel("Nome", { exact: true }).fill(adminName);
   await createForm.getByLabel("Nome utente", { exact: true }).fill(adminEmail);
   await createForm.getByLabel("Password").fill("password-admin");

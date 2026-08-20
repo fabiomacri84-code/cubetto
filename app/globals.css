@@ -156,6 +156,7 @@
     background: color-mix(in srgb, var(--color-bg) 82%, transparent);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+    padding-top: max(env(safe-area-inset-top), 0px);
   }
 
   /* ===== Tile elemento ===== */

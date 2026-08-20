@@ -59,7 +59,7 @@ export async function setUserRole(formData: FormData) {
     data: { role },
   });
 
-  revalidatePath("/admin");
+  revalidatePath("/settings");
 }
 
 export async function resetUserPassword(formData: FormData) {
@@ -86,7 +86,7 @@ export async function resetUserPassword(formData: FormData) {
     data: { passwordHash: hashPassword(newPassword) },
   });
 
-  revalidatePath("/admin");
+  revalidatePath("/settings");
 }
 
 export async function deleteUser(formData: FormData) {
@@ -109,7 +109,7 @@ export async function deleteUser(formData: FormData) {
 
   await prisma.user.delete({ where: { id: userId } });
 
-  revalidatePath("/admin");
+  revalidatePath("/settings");
 }
 
 export async function createUser(formData: FormData) {
@@ -147,5 +147,5 @@ export async function createUser(formData: FormData) {
     select: { id: true },
   });
 
-  revalidatePath("/admin");
+  revalidatePath("/settings");
 }

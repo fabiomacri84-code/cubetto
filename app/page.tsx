@@ -4,11 +4,10 @@ import { logout } from "./auth-actions";
 import { createList, createPack, joinList } from "./actions";
 import { prisma } from "./db";
 import { Button } from "./components/ui/button";
-import { Field } from "./components/ui/field";
 import { Input } from "./components/ui/input";
 import { IconImage } from "./components/icon-image";
-import { IconPicker } from "./components/icon-picker";
 import { AppShell } from "./components/app-shell";
+import { CreateSheet } from "./components/create-sheet";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,7 +49,7 @@ export default async function Home() {
         color: p.color,
       }))}
     >
-      <div className="mx-auto w-full max-w-5xl px-4 pb-32 pt-3 sm:px-6 lg:px-10 lg:pb-16 lg:pt-10">
+      <div className="mx-auto w-full max-w-5xl px-4 pb-32 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 lg:px-10 lg:pb-16 lg:pt-10">
         {/* Barra superiore mobile */}
         <header className="flex items-center justify-between lg:hidden">
           <span className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-text">
@@ -60,16 +59,6 @@ export default async function Home() {
             Cubetto
           </span>
           <div className="flex items-center gap-1.5">
-            {user.role === "admin" ? (
-              <Link
-                href="/admin"
-                aria-label="Amministrazione"
-                title="Amministrazione"
-                className="flex h-11 w-11 items-center justify-center rounded-full text-xl text-text-2 hover:bg-subtle"
-              >
-                🛡️
-              </Link>
-            ) : null}
             <Link
               href="/settings"
               aria-label="Impostazioni"
@@ -119,25 +108,16 @@ export default async function Home() {
                 Crea la tua prima lista: spesa, valigia, cosa portare… tutto
                 quello che ti serve.
               </p>
-              <details className="w-full max-w-xs">
-                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-semibold text-white shadow-sm hover:bg-accent-strong [&::-webkit-details-marker]:hidden">
-                  ＋ Nuova lista
-                </summary>
-                <form action={createList} className="mt-3 flex flex-col gap-3">
-                  <Field label="Nome">
-                    <Input
-                      name="name"
-                      type="text"
-                      required
-                      placeholder="es. Spesa settimanale"
-                    />
-                  </Field>
-                  <IconPicker name="emoji" initial="🛒" />
-                  <Button type="submit" variant="primary" size="sm" className="w-full">
-                    Crea lista
-                  </Button>
-                </form>
-              </details>
+              <CreateSheet
+                variant="inline"
+                triggerLabel="Nuova lista"
+                title="Nuova lista"
+                placeholder="es. Spesa settimanale"
+                iconInitial="🛒"
+                cta="Crea lista"
+                action={createList}
+                className="w-full max-w-xs"
+              />
             </div>
           ) : (
             <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -188,28 +168,15 @@ export default async function Home() {
                 );
               })}
 
-              <details className="card group flex flex-col justify-center p-4">
-                <summary className="flex min-h-11 cursor-pointer list-none flex-col items-center justify-center gap-1 rounded-xl text-center text-sm font-semibold text-accent-strong transition-colors hover:bg-accent-soft [&::-webkit-details-marker]:hidden">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-soft text-xl" aria-hidden>
-                    ＋
-                  </span>
-                  Nuova lista
-                </summary>
-                <form action={createList} className="mt-3 flex flex-col gap-3">
-                  <Field label="Nome">
-                    <Input
-                      name="name"
-                      type="text"
-                      required
-                      placeholder="es. Spesa settimanale"
-                    />
-                  </Field>
-                  <IconPicker name="emoji" initial="🛒" />
-                  <Button type="submit" variant="primary" size="sm" className="w-full">
-                    Crea lista
-                  </Button>
-                </form>
-              </details>
+              <CreateSheet
+                variant="tile"
+                triggerLabel="Nuova lista"
+                title="Nuova lista"
+                placeholder="es. Spesa settimanale"
+                iconInitial="🛒"
+                cta="Crea lista"
+                action={createList}
+              />
             </div>
           )}
         </section>
@@ -234,25 +201,16 @@ export default async function Home() {
                 I pack sono raccolte riusabili: creali una volta e usali in
                 ogni lista.
               </p>
-              <details>
-                <summary className="flex h-11 cursor-pointer list-none items-center justify-center gap-1 rounded-xl bg-accent px-4 text-sm font-semibold text-white shadow-sm hover:bg-accent-strong [&::-webkit-details-marker]:hidden">
-                  ＋ Nuovo pack
-                </summary>
-                <form action={createPack} className="absolute right-4 top-16 z-10 mt-3 flex w-72 flex-col gap-3 rounded-2xl border border-line bg-elevated p-4 shadow-lift">
-                  <Field label="Nome">
-                    <Input
-                      name="name"
-                      type="text"
-                      required
-                      placeholder="es. Valigia estate"
-                    />
-                  </Field>
-                  <IconPicker name="emoji" initial="🧳" />
-                  <Button type="submit" variant="primary" size="sm" className="w-full">
-                    Crea pack
-                  </Button>
-                </form>
-              </details>
+              <CreateSheet
+                variant="inline"
+                triggerLabel="Nuovo pack"
+                title="Nuovo pack"
+                placeholder="es. Valigia estate"
+                iconInitial="🧳"
+                cta="Crea pack"
+                action={createPack}
+                className="shrink-0"
+              />
             </div>
           ) : (
             <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -278,28 +236,15 @@ export default async function Home() {
                 </Link>
               ))}
 
-              <details className="card group flex flex-col justify-center p-4">
-                <summary className="flex min-h-11 cursor-pointer list-none flex-col items-center justify-center gap-1 rounded-xl text-center text-sm font-semibold text-accent-strong transition-colors hover:bg-accent-soft [&::-webkit-details-marker]:hidden">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-soft text-xl" aria-hidden>
-                    ＋
-                  </span>
-                  Nuovo pack
-                </summary>
-                <form action={createPack} className="mt-3 flex flex-col gap-3">
-                  <Field label="Nome">
-                    <Input
-                      name="name"
-                      type="text"
-                      required
-                      placeholder="es. Valigia estate"
-                    />
-                  </Field>
-                  <IconPicker name="emoji" initial="🧳" />
-                  <Button type="submit" variant="primary" size="sm" className="w-full">
-                    Crea pack
-                  </Button>
-                </form>
-              </details>
+              <CreateSheet
+                variant="tile"
+                triggerLabel="Nuovo pack"
+                title="Nuovo pack"
+                placeholder="es. Valigia estate"
+                iconInitial="🧳"
+                cta="Crea pack"
+                action={createPack}
+              />
             </div>
           )}
         </section>

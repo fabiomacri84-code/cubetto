@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { requireUser } from "../auth";
 import { changePassword } from "../auth-actions";
+import { prisma } from "../db";
+import { AdminPanel } from "../components/admin-panel";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Field } from "../components/ui/field";
@@ -17,6 +19,20 @@ export default async function SettingsPage({
 }) {
   const user = await requireUser();
 
+  const isAdmin = user.role === "admin";
+  const users = isAdmin
+    ? await prisma.user.findMany({
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "asc" },
+      })
+    : [];
+
   const { error, changed } = await searchParams;
   const errorMessage =
     error === "short"
@@ -29,7 +45,7 @@ export default async function SettingsPage({
   const successMessage = changed === "1" ? "Password aggiornata." : null;
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md px-4 pb-24 pt-6 sm:px-6">
+    <main className="mx-auto min-h-dvh max-w-2xl px-4 pb-24 pt-[max(1.5rem,env(safe-area-inset-top))] sm:px-6">
       <header className="flex items-center gap-3">
         <Link
           href="/"
@@ -93,6 +109,21 @@ export default async function SettingsPage({
           </Button>
         </form>
       </Card>
+
+      {isAdmin ? (
+        <section className="mt-8">
+          <h2 className="text-sm font-extrabold uppercase tracking-widest text-text-3">
+            Gestione utenti
+          </h2>
+          <p className="mt-1 text-xs leading-5 text-text-3">
+            Crea nuovi account, cambia i ruoli e reimposta le password di tutto
+            il portale.
+          </p>
+          <div className="mt-3">
+            <AdminPanel user={user} users={users} />
+          </div>
+        </section>
+      ) : null}
 
       <p className="mt-8 text-center text-xs text-text-3">
         v{packageJson.version}

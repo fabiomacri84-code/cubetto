@@ -116,15 +116,6 @@ export function AppShell({
             </div>
           </div>
           <div className="flex gap-1.5">
-            {user.role === "admin" ? (
-              <Link
-                href="/admin"
-                aria-label="Amministrazione"
-                className="flex h-10 flex-1 items-center justify-center rounded-xl text-sm font-medium text-text-2 hover:bg-subtle"
-              >
-                🛡️ Admin
-              </Link>
-            ) : null}
             <Link
               href="/settings"
               className="flex h-10 flex-1 items-center justify-center rounded-xl text-sm font-medium text-text-2 hover:bg-subtle"

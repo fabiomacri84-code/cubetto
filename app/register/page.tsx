@@ -32,7 +32,7 @@ export default async function RegisterPage({
     error === "email-exists" ? "Esiste già un account con questa email." : null;
 
   return (
-    <main className="flex min-h-dvh items-center justify-center px-5 pb-16 pt-14 sm:pt-20">
+    <main className="flex min-h-dvh items-center justify-center px-5 pb-16 pt-[max(3.5rem,env(safe-area-inset-top))] sm:pt-20">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center text-center">
           <span

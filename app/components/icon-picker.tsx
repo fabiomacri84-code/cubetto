@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { iconPath, normalizeEmoji } from "../lib/icon-db.generated";
 
 type IconEntry = {
@@ -33,6 +34,13 @@ function stripAccents(value: string): string {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+type Position = {
+  left: number;
+  top?: number;
+  bottom?: number;
+  width: number;
+};
+
 export function IconPicker({
   name = "emoji",
   initial = "📦",
@@ -44,10 +52,28 @@ export function IconPicker({
   const [value, setValue] = useState(initial);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [pos, setPos] = useState<Position | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     loadIcons().then(setIcons).catch(() => setIcons([]));
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onScroll = () => setOpen(false);
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("scroll", onScroll, true);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("scroll", onScroll, true);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
 
   const filtered = useMemo(() => {
     if (!icons) return [];
@@ -72,12 +98,40 @@ export function IconPicker({
     return [...map.entries()];
   }, [filtered]);
 
+  function toggle() {
+    if (open) {
+      setOpen(false);
+      return;
+    }
+
+    const el = triggerRef.current;
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      const width = Math.min(320, window.innerWidth - 16);
+      const left = Math.max(
+        8,
+        Math.min(rect.left, window.innerWidth - width - 8),
+      );
+      const openAbove = rect.top - 8 > 360;
+
+      setPos({
+        left,
+        width,
+        top: openAbove ? undefined : rect.bottom + 8,
+        bottom: openAbove ? window.innerHeight - rect.top + 8 : undefined,
+      });
+    }
+
+    setOpen(true);
+  }
+
   return (
     <div className="relative">
       <input type="hidden" name={name} value={normalizeEmoji(value)} />
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggle}
         className="flex h-11 w-11 items-center justify-center rounded-md border border-line-strong bg-subtle text-xl transition-colors hover:border-accent"
         aria-label="Scegli icona"
         aria-expanded={open}
@@ -86,59 +140,68 @@ export function IconPicker({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={iconPath(value)} alt="" className="h-6 w-6" />
       </button>
-      {open ? (
-        <div className="absolute bottom-12 left-0 z-20 w-80 rounded-lg border border-line bg-elevated p-3 shadow-lg">
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Cerca icona…"
-            className="mb-2 h-9 w-full rounded-md border border-line-strong bg-subtle px-3 text-sm text-text outline-none placeholder:text-text-3 focus:border-accent"
-          />
-          <div className="max-h-64 overflow-y-auto pr-1">
-            {groups.length === 0 ? (
-              <p className="px-1 py-3 text-center text-xs text-text-3">
-                Nessuna icona trovata
-              </p>
-            ) : (
-              groups.map(([category, categoryIcons]) => (
-                <div key={category} className="mb-2">
-                  <p className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-wide text-text-3">
-                    {category}
+      {open && pos
+        ? createPortal(
+            <div
+              className="fixed z-[60] rounded-lg border border-line bg-elevated p-3 shadow-lg"
+              style={{ left: pos.left, top: pos.top, bottom: pos.bottom, width: pos.width }}
+              role="dialog"
+              aria-label="Scegli icona"
+            >
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Cerca icona…"
+                autoFocus
+                className="mb-2 h-9 w-full rounded-md border border-line-strong bg-subtle px-3 text-sm text-text outline-none placeholder:text-text-3 focus:border-accent"
+              />
+              <div className="max-h-64 overflow-y-auto pr-1">
+                {groups.length === 0 ? (
+                  <p className="px-1 py-3 text-center text-xs text-text-3">
+                    Nessuna icona trovata
                   </p>
-                  <div className="grid grid-cols-5 gap-1">
-                    {categoryIcons.map((icon) => (
-                      <button
-                        key={icon.emoji}
-                        type="button"
-                        onClick={() => {
-                          setValue(icon.emoji);
-                          setOpen(false);
-                          setQuery("");
-                        }}
-                        title={icon.name}
-                        aria-label={icon.name}
-                        className={`flex h-10 w-10 items-center justify-center rounded transition-colors hover:bg-surface-2 ${
-                          normalizeEmoji(icon.emoji) === normalizeEmoji(value)
-                            ? "bg-accent-soft ring-1 ring-accent"
-                            : ""
-                        }`}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={iconPath(icon.emoji)}
-                          alt=""
-                          className="h-6 w-6"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      ) : null}
+                ) : (
+                  groups.map(([category, categoryIcons]) => (
+                    <div key={category} className="mb-2">
+                      <p className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-wide text-text-3">
+                        {category}
+                      </p>
+                      <div className="grid grid-cols-5 gap-1">
+                        {categoryIcons.map((icon) => (
+                          <button
+                            key={icon.emoji}
+                            type="button"
+                            onClick={() => {
+                              setValue(icon.emoji);
+                              setOpen(false);
+                              setQuery("");
+                            }}
+                            title={icon.name}
+                            aria-label={icon.name}
+                            className={`flex h-10 w-10 items-center justify-center rounded transition-colors hover:bg-surface-2 ${
+                              normalizeEmoji(icon.emoji) === normalizeEmoji(value)
+                                ? "bg-accent-soft ring-1 ring-accent"
+                                : ""
+                            }`}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={iconPath(icon.emoji)}
+                              alt=""
+                              className="h-6 w-6"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

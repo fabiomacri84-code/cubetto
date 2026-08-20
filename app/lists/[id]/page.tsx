@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
-  deleteItem,
   deleteList,
   emptyList,
   generateInviteCode,
@@ -19,6 +18,7 @@ import { prisma } from "../../db";
 import { Button } from "../../components/ui/button";
 import { IconImage } from "../../components/icon-image";
 import { ImageUploadButton } from "../../components/image-upload";
+import { DeleteItemButton } from "../../components/delete-item-button";
 import { ListRefresher } from "../../components/list-refresher";
 import { ListAddSheet } from "../../components/list-add-sheet";
 import { AppShell } from "../../components/app-shell";
@@ -39,21 +39,23 @@ function Tile({
   isOwner: boolean;
   stored?: boolean;
 }) {
+  const image = item.imageUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={item.imageUrl}
+      alt=""
+      className="h-full w-full object-cover"
+    />
+  ) : (
+    <IconImage emoji={item.emoji} className="h-8 w-8" />
+  );
+
   return (
     <li className="relative">
       {stored ? (
         <div className="tile tile-done h-full p-3">
           <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-surface-2 text-2xl opacity-70">
-            {item.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={item.imageUrl}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <IconImage emoji={item.emoji} className="h-8 w-8" />
-            )}
+            {image}
           </span>
           <p className="mt-2 truncate text-sm font-medium text-text-3">
             {item.name}
@@ -63,65 +65,104 @@ function Tile({
           ) : null}
         </div>
       ) : canEdit ? (
-        <form action={toggleItem} className="tile block h-full">
-          <input type="hidden" name="id" value={item.id} />
-          <button
-            type="submit"
-            aria-label={item.checked ? "Da rifare" : "Fatto"}
-            className={`block h-full w-full p-3 text-left ${
-              item.checked ? "tile-done" : ""
-            }`}
-          >
-            <span className="flex items-start justify-between">
-              <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-surface-2 text-2xl">
-                {item.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={item.imageUrl}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <IconImage emoji={item.emoji} className="h-8 w-8" />
-                )}
-              </span>
-              {item.checked ? (
+        <div className={`tile h-full p-3 ${item.checked ? "tile-done" : ""}`}>
+          <form action={toggleItem}>
+            <input type="hidden" name="id" value={item.id} />
+            <button
+              type="submit"
+              aria-label={item.checked ? "Da rifare" : "Fatto"}
+              className="block w-full text-left"
+            >
+              <span className="flex items-start justify-between">
+                <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-surface-2 text-2xl">
+                  {image}
+                </span>
                 <span
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-positive text-sm font-bold text-white"
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                    item.checked
+                      ? "bg-positive text-white"
+                      : "border-2 border-line-strong bg-surface"
+                  }`}
                   aria-hidden
                 >
-                  ✓
+                  {item.checked ? "✓" : null}
                 </span>
-              ) : null}
-            </span>
-            <p
-              className={`mt-2 truncate text-sm font-semibold ${
-                item.checked ? "text-text-3 line-through" : "text-text"
-              }`}
-            >
-              {item.name}
-            </p>
-            {item.quantity > 1 ? (
-              <p className="tnum mt-0.5 text-xs text-text-3">
-                ×{item.quantity}
+              </span>
+              <p
+                className={`mt-2 truncate text-sm font-semibold ${
+                  item.checked ? "text-text-3 line-through" : "text-text"
+                }`}
+              >
+                {item.name}
               </p>
+            </button>
+          </form>
+
+          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+            <div className="flex items-center gap-1 rounded-full border border-line bg-white p-0.5 shadow-sm">
+              <form action={setItemQuantity}>
+                <input type="hidden" name="id" value={item.id} />
+                <input
+                  type="hidden"
+                  name="quantity"
+                  value={Math.max(1, item.quantity - 1)}
+                />
+                <button
+                  type="submit"
+                  aria-label="Diminuisci quantità"
+                  disabled={item.quantity <= 1}
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-base font-semibold text-text-2 hover:bg-subtle disabled:opacity-40"
+                >
+                  −
+                </button>
+              </form>
+              <span className="tnum min-w-6 text-center text-sm font-semibold text-text">
+                {item.quantity}
+              </span>
+              <form action={setItemQuantity}>
+                <input type="hidden" name="id" value={item.id} />
+                <input
+                  type="hidden"
+                  name="quantity"
+                  value={Math.min(999, item.quantity + 1)}
+                />
+                <button
+                  type="submit"
+                  aria-label="Aumenta quantità"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-base font-semibold text-text-2 hover:bg-subtle"
+                >
+                  ＋
+                </button>
+              </form>
+            </div>
+
+            {isOwner ? (
+              <>
+                <ImageUploadButton action={setItemImage} itemId={item.id} />
+                {item.imageUrl ? (
+                  <form action={clearItemImage}>
+                    <input type="hidden" name="id" value={item.id} />
+                    <button
+                      type="submit"
+                      aria-label="Rimuovi foto"
+                      className="flex h-7 w-7 items-center justify-center rounded text-xs text-text-3 hover:bg-negative-soft hover:text-negative"
+                    >
+                      ✕
+                    </button>
+                  </form>
+                ) : null}
+                {!item.checked ? (
+                  <DeleteItemButton itemId={item.id} name={item.name} />
+                ) : null}
+              </>
             ) : null}
-          </button>
-        </form>
+          </div>
+        </div>
       ) : (
         <div className={`tile h-full p-3 ${item.checked ? "tile-done" : ""}`}>
           <span className="flex items-start justify-between">
             <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-surface-2 text-2xl">
-              {item.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={item.imageUrl}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <IconImage emoji={item.emoji} className="h-8 w-8" />
-              )}
+              {image}
             </span>
             {item.checked ? (
               <span
@@ -149,69 +190,6 @@ function Tile({
           ) : null}
         </div>
       )}
-
-      {!stored && canEdit ? (
-        <div className="absolute right-2 top-2 flex items-center gap-1">
-          <form action={setItemQuantity}>
-            <input type="hidden" name="id" value={item.id} />
-            <input
-              type="hidden"
-              name="quantity"
-              value={Math.max(1, item.quantity - 1)}
-            />
-            <button
-              type="submit"
-              aria-label="Diminuisci quantità"
-              disabled={item.quantity <= 1}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-base font-semibold text-text-2 shadow-sm hover:bg-subtle disabled:opacity-40"
-            >
-              −
-            </button>
-          </form>
-          <form action={setItemQuantity}>
-            <input type="hidden" name="id" value={item.id} />
-            <input
-              type="hidden"
-              name="quantity"
-              value={Math.min(999, item.quantity + 1)}
-            />
-            <button
-              type="submit"
-              aria-label="Aumenta quantità"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-base font-semibold text-text-2 shadow-sm hover:bg-subtle"
-            >
-              ＋
-            </button>
-          </form>
-          {isOwner ? (
-            <>
-              <ImageUploadButton action={setItemImage} itemId={item.id} />
-              {item.imageUrl ? (
-                <form action={clearItemImage}>
-                  <input type="hidden" name="id" value={item.id} />
-                  <button
-                    type="submit"
-                    aria-label="Rimuovi foto"
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-xs text-text-3 shadow-sm hover:bg-negative-soft hover:text-negative"
-                  >
-                    ✕
-                  </button>
-                </form>
-              ) : null}
-              <form action={deleteItem}>
-                <input type="hidden" name="id" value={item.id} />
-                <button
-                  type="submit"
-                  aria-label={`Elimina ${item.name}`}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-sm text-text-3 shadow-sm hover:bg-negative-soft hover:text-negative"
-                >
-                  🗑
-                </button>
-              </form>
-            </>
-          ) : null}
-        </div>
-      ) : null}
     </li>
   );
 }
