@@ -67,8 +67,8 @@ export function AdminPanel({
                 </span>
               </div>
 
-              <div className="mt-4 grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="flex flex-col gap-1.5">
+              <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+                <div className="flex flex-col gap-1.5 sm:min-w-0 sm:flex-1">
                   <p className="text-xs font-medium text-text-3">Ruolo</p>
                   <form action={setUserRole} className="flex items-center gap-2">
                     <input type="hidden" name="userId" value={u.id} />
@@ -77,7 +77,7 @@ export function AdminPanel({
                       defaultValue={u.role}
                       disabled={isSelf}
                       aria-label={`Ruolo di ${u.name}`}
-                      className="min-h-9 flex-1 rounded-md border border-line-strong bg-subtle px-2 py-1.5 text-sm text-text outline-none focus:border-accent disabled:opacity-50"
+                      className="min-h-9 min-w-0 flex-1 rounded-md border border-line-strong bg-subtle px-2 py-1.5 text-sm text-text outline-none focus:border-accent disabled:opacity-50"
                     >
                       <option value="user">Utente</option>
                       <option value="admin">Amministratore</option>
@@ -89,7 +89,7 @@ export function AdminPanel({
                 </div>
 
                 {u.role !== "admin" ? (
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1.5 sm:min-w-0 sm:flex-1">
                     <p className="text-xs font-medium text-text-3">
                       Nuova password
                     </p>
@@ -105,7 +105,7 @@ export function AdminPanel({
                         minLength={8}
                         required
                         aria-label={`Nuova password per ${u.name}`}
-                        className="min-h-9 flex-1 px-2 py-1.5 text-sm"
+                        className="min-h-9 min-w-0 flex-1 px-2 py-1.5 text-sm"
                       />
                       <Button type="submit" size="sm">
                         Reimposta
