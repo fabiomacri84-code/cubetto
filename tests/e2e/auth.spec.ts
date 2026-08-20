@@ -76,6 +76,7 @@ test("l'admin gestisce le utenze", async ({ page }) => {
     page.getByRole("heading", { name: "Gestione utenti" }),
   ).toBeVisible();
 
+  await page.getByRole("button", { name: /Nuovo utente/ }).click();
   const createForm = page
     .locator("form")
     .filter({ has: page.getByRole("button", { name: "Crea utente" }) });

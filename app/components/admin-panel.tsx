@@ -1,13 +1,9 @@
-import {
-  createUser,
-  resetUserPassword,
-  setUserRole,
-} from "../admin-actions";
+import { resetUserPassword, setUserRole } from "../admin-actions";
 import { DeleteUserButton } from "./delete-user-button";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { Field } from "./ui/field";
 import { Input } from "./ui/input";
+import { CreateUserSheet } from "./create-user-sheet";
 
 type AdminUser = {
   id: string;
@@ -32,80 +28,49 @@ export function AdminPanel({
   users: AdminUser[];
 }) {
   return (
-    <>
-      <Card>
-        <h2 className="text-sm font-semibold text-text">Nuovo utente</h2>
-        <form action={createUser} className="mt-4 flex flex-col gap-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Nome">
-              <Input name="name" type="text" required />
-            </Field>
-            <Field label="Nome utente">
-              <Input name="email" type="text" required />
-            </Field>
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Password" hint="Almeno 8 caratteri.">
-              <Input name="password" type="password" required minLength={8} />
-            </Field>
-            <Field label="Ruolo">
-              <select
-                name="role"
-                defaultValue="user"
-                className="min-h-11 w-full rounded-md border border-line-strong bg-subtle px-3 py-2 text-sm text-text transition-colors duration-150 outline-none focus:border-accent"
-              >
-                <option value="user">Utente</option>
-                <option value="admin">Amministratore</option>
-              </select>
-            </Field>
-          </div>
-          <Button type="submit" variant="primary" className="w-full">
-            Crea utente
-          </Button>
-        </form>
-      </Card>
-
-      <Card className="mt-4">
+    <Card>
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-text">
           Utenti ({users.length})
         </h2>
+        <CreateUserSheet />
+      </div>
 
-        <ul className="mt-4 divide-y divide-line">
-          {users.map((u) => {
-            const isSelf = u.id === user.id;
+      <ul className="mt-4 divide-y divide-line">
+        {users.map((u) => {
+          const isSelf = u.id === user.id;
 
-            return (
-              <li key={u.id} className="py-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-text">
-                      {u.name}
-                      {isSelf ? (
-                        <span className="ml-2 text-xs font-normal text-text-3">
-                          (tu)
-                        </span>
-                      ) : null}
-                    </p>
-                    <p className="tnum mt-0.5 text-xs text-text-3">
-                      {u.email} · dal {formatDate(u.createdAt)}
-                    </p>
-                  </div>
-                  <span
-                    className={
-                      u.role === "admin"
-                        ? "rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent"
-                        : "rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium text-text-3"
-                    }
-                  >
-                    {u.role === "admin" ? "Amministratore" : "Utente"}
-                  </span>
+          return (
+            <li key={u.id} className="py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-text">
+                    {u.name}
+                    {isSelf ? (
+                      <span className="ml-2 text-xs font-normal text-text-3">
+                        (tu)
+                      </span>
+                    ) : null}
+                  </p>
+                  <p className="tnum mt-0.5 text-xs text-text-3">
+                    {u.email} · dal {formatDate(u.createdAt)}
+                  </p>
                 </div>
+                <span
+                  className={
+                    u.role === "admin"
+                      ? "rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent"
+                      : "rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium text-text-3"
+                  }
+                >
+                  {u.role === "admin" ? "Amministratore" : "Utente"}
+                </span>
+              </div>
 
-                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                  <form
-                    action={setUserRole}
-                    className="flex items-center gap-2"
-                  >
+              <div className="mt-4 grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-xs font-medium text-text-3">Ruolo</p>
+                  <form action={setUserRole} className="flex items-center gap-2">
                     <input type="hidden" name="userId" value={u.id} />
                     <select
                       name="role"
@@ -121,33 +86,45 @@ export function AdminPanel({
                       Salva
                     </Button>
                   </form>
+                </div>
 
-                  <form
-                    action={resetUserPassword}
-                    className="flex items-center gap-2"
-                  >
-                    <input type="hidden" name="userId" value={u.id} />
-                    <Input
-                      name="newPassword"
-                      type="password"
-                      placeholder="Nuova password"
-                      minLength={8}
-                      required
-                      aria-label={`Nuova password per ${u.name}`}
-                      className="min-h-9 flex-1 px-2 py-1.5 text-sm"
-                    />
-                    <Button type="submit" size="sm">
-                      Reimposta
-                    </Button>
-                  </form>
+                {u.role !== "admin" ? (
+                  <div className="flex flex-col gap-1.5">
+                    <p className="text-xs font-medium text-text-3">
+                      Nuova password
+                    </p>
+                    <form
+                      action={resetUserPassword}
+                      className="flex items-center gap-2"
+                    >
+                      <input type="hidden" name="userId" value={u.id} />
+                      <Input
+                        name="newPassword"
+                        type="password"
+                        placeholder="min. 8 caratteri"
+                        minLength={8}
+                        required
+                        aria-label={`Nuova password per ${u.name}`}
+                        className="min-h-9 flex-1 px-2 py-1.5 text-sm"
+                      />
+                      <Button type="submit" size="sm">
+                        Reimposta
+                      </Button>
+                    </form>
+                  </div>
+                ) : null}
 
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-xs font-medium text-text-3">
+                    Elimina account
+                  </p>
                   <DeleteUserButton userId={u.id} name={u.name} />
                 </div>
-              </li>
-            );
-          })}
-        </ul>
-      </Card>
-    </>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </Card>
   );
 }

@@ -148,4 +148,5 @@ export async function createUser(formData: FormData) {
   });
 
   revalidatePath("/settings");
+  return { ok: true };
 }
