@@ -205,6 +205,35 @@ export async function setItemQuantity(formData: FormData) {
   revalidatePath(`/lists/${item.listId}`);
 }
 
+export async function setItemEmoji(formData: FormData) {
+  const user = await getUser();
+  const itemId = readText(formData, "id");
+  const emoji = readText(formData, "emoji") || "📦";
+  const item = await prisma.item.findUnique({
+    where: { id: itemId },
+    include: { list: { include: { members: true } } },
+  });
+
+  if (!item) {
+    revalidatePath("/");
+    return;
+  }
+
+  const member = item.list.members.find((m) => m.userId === user.id);
+
+  if (!member || member.role === "viewer") {
+    throw new Error("Non puoi modificare questa lista.");
+  }
+
+  await prisma.item.update({
+    where: { id: itemId },
+    data: { emoji, imageUrl: null, imageSource: "emoji" },
+  });
+
+  await touchList(item.listId);
+  revalidatePath(`/lists/${item.listId}`);
+}
+
 export async function deleteItem(formData: FormData) {
   const user = await getUser();
   const itemId = readText(formData, "id");

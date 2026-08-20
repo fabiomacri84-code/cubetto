@@ -11,13 +11,14 @@ import {
   setMemberRole,
   removeMember,
   toggleItem,
+  setItemEmoji,
 } from "../../actions";
 import { setItemImage, clearItemImage } from "../../images-actions";
 import { requireUser } from "../../auth";
 import { prisma } from "../../db";
 import { Button } from "../../components/ui/button";
 import { IconImage } from "../../components/icon-image";
-import { ImageUploadButton } from "../../components/image-upload";
+import { ItemImageEditor } from "../../components/item-image-editor";
 import { DeleteItemButton } from "../../components/delete-item-button";
 import { ListRefresher } from "../../components/list-refresher";
 import { ListAddSheet } from "../../components/list-add-sheet";
@@ -65,7 +66,7 @@ function Tile({
           ) : null}
         </div>
       ) : canEdit ? (
-        <div className={`tile h-full p-3 ${item.checked ? "tile-done" : ""}`}>
+        <div className={`tile relative h-full p-3 ${item.checked ? "tile-done" : ""}`}>
           <form action={toggleItem}>
             <input type="hidden" name="id" value={item.id} />
             <button
@@ -97,6 +98,16 @@ function Tile({
               </p>
             </button>
           </form>
+
+          {isOwner ? (
+            <ItemImageEditor
+              item={item}
+              setItemImage={setItemImage}
+              setItemEmoji={setItemEmoji}
+              clearItemImage={clearItemImage}
+              className="absolute left-3 top-3 h-12 w-12"
+            />
+          ) : null}
 
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
             <div className="flex items-center gap-1 rounded-full border border-line bg-white p-0.5 shadow-sm">
@@ -137,24 +148,7 @@ function Tile({
             </div>
 
             {isOwner ? (
-              <>
-                <ImageUploadButton action={setItemImage} itemId={item.id} />
-                {item.imageUrl ? (
-                  <form action={clearItemImage}>
-                    <input type="hidden" name="id" value={item.id} />
-                    <button
-                      type="submit"
-                      aria-label="Rimuovi foto"
-                      className="flex h-7 w-7 items-center justify-center rounded text-xs text-text-3 hover:bg-negative-soft hover:text-negative"
-                    >
-                      ✕
-                    </button>
-                  </form>
-                ) : null}
-                {!item.checked ? (
-                  <DeleteItemButton itemId={item.id} name={item.name} />
-                ) : null}
-              </>
+              <>{!item.checked ? <DeleteItemButton itemId={item.id} name={item.name} /> : null}</>
             ) : null}
           </div>
         </div>

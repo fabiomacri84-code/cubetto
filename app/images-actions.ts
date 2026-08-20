@@ -9,7 +9,16 @@ import { prisma } from "./db";
 
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
 const MAX_SIZE = 25 * 1024 * 1024;
-const ALLOWED_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp", "gif", "avif"]);
+const ALLOWED_EXTENSIONS = new Set([
+  "png",
+  "jpg",
+  "jpeg",
+  "webp",
+  "gif",
+  "avif",
+  "heic",
+  "heif",
+]);
 
 async function ensureUploadsDir() {
   await fs.mkdir(UPLOADS_DIR, { recursive: true });

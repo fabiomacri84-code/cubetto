@@ -34,6 +34,105 @@ function stripAccents(value: string): string {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+export function IconGrid({
+  value,
+  onSelect,
+  autoFocus = false,
+}: {
+  value: string;
+  onSelect: (emoji: string) => void;
+  autoFocus?: boolean;
+}) {
+  const [icons, setIcons] = useState<IconEntry[] | null>(iconsCache);
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    loadIcons().then(setIcons).catch(() => setIcons([]));
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!icons) return [];
+    const term = stripAccents(query.trim().toLowerCase());
+    if (!term) return icons;
+    return icons.filter((icon) =>
+      [
+        stripAccents(icon.name.toLowerCase()),
+        ...icon.keywords.map((k) => stripAccents(k.toLowerCase())),
+        icon.emoji,
+      ].some((text) => text.includes(term))
+    );
+  }, [icons, query]);
+
+  const groups = useMemo(() => {
+    const map = new Map<string, IconEntry[]>();
+    for (const icon of filtered) {
+      const list = map.get(icon.category) ?? [];
+      list.push(icon);
+      map.set(icon.category, list);
+    }
+    return [...map.entries()];
+  }, [filtered]);
+
+  if (!icons) {
+    return (
+      <p className="px-1 py-4 text-center text-xs text-text-3">
+        Caricamento icone…
+      </p>
+    );
+  }
+
+  return (
+    <>
+      <input
+        type="search"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder="Cerca icona…"
+        autoFocus={autoFocus}
+        className="h-9 w-full rounded-md border border-line-strong bg-subtle px-3 text-sm text-text outline-none placeholder:text-text-3 focus:border-accent"
+      />
+      <div className="mt-2 max-h-64 overflow-y-auto pr-1">
+        {groups.length === 0 ? (
+          <p className="px-1 py-3 text-center text-xs text-text-3">
+            Nessuna icona trovata
+          </p>
+        ) : (
+          groups.map(([category, categoryIcons]) => (
+            <div key={category} className="mb-2">
+              <p className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-wide text-text-3">
+                {category}
+              </p>
+              <div className="grid grid-cols-5 gap-1">
+                {categoryIcons.map((icon) => (
+                  <button
+                    key={icon.emoji}
+                    type="button"
+                    onClick={() => onSelect(icon.emoji)}
+                    title={icon.name}
+                    aria-label={icon.name}
+                    className={`flex h-10 w-10 items-center justify-center rounded transition-colors hover:bg-surface-2 ${
+                      normalizeEmoji(icon.emoji) === normalizeEmoji(value)
+                        ? "bg-accent-soft ring-1 ring-accent"
+                        : ""
+                    }`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={iconPath(icon.emoji)}
+                      alt=""
+                      className="h-6 w-6"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
 type Position = {
   left: number;
   top?: number;
@@ -48,10 +147,8 @@ export function IconPicker({
   name?: string;
   initial?: string;
 }) {
-  const [icons, setIcons] = useState<IconEntry[] | null>(iconsCache);
   const [value, setValue] = useState(initial);
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
   const [pos, setPos] = useState<Position | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -59,10 +156,6 @@ export function IconPicker({
   const autoFocus =
     typeof window !== "undefined" &&
     (window.matchMedia?.("(pointer: fine)").matches ?? true);
-
-  useEffect(() => {
-    loadIcons().then(setIcons).catch(() => setIcons([]));
-  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -90,29 +183,6 @@ export function IconPicker({
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
-
-  const filtered = useMemo(() => {
-    if (!icons) return [];
-    const term = stripAccents(query.trim().toLowerCase());
-    if (!term) return icons;
-    return icons.filter((icon) =>
-      [
-        stripAccents(icon.name.toLowerCase()),
-        ...icon.keywords.map((k) => stripAccents(k.toLowerCase())),
-        icon.emoji,
-      ].some((text) => text.includes(term))
-    );
-  }, [icons, query]);
-
-  const groups = useMemo(() => {
-    const map = new Map<string, IconEntry[]>();
-    for (const icon of filtered) {
-      const list = map.get(icon.category) ?? [];
-      list.push(icon);
-      map.set(icon.category, list);
-    }
-    return [...map.entries()];
-  }, [filtered]);
 
   function toggle() {
     if (open) {
@@ -166,56 +236,14 @@ export function IconPicker({
               role="dialog"
               aria-label="Scegli icona"
             >
-              <input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Cerca icona…"
+              <IconGrid
+                value={value}
+                onSelect={(emoji) => {
+                  setValue(emoji);
+                  setOpen(false);
+                }}
                 autoFocus={autoFocus}
-                className="mb-2 h-9 w-full rounded-md border border-line-strong bg-subtle px-3 text-sm text-text outline-none placeholder:text-text-3 focus:border-accent"
               />
-              <div className="max-h-64 overflow-y-auto pr-1">
-                {groups.length === 0 ? (
-                  <p className="px-1 py-3 text-center text-xs text-text-3">
-                    Nessuna icona trovata
-                  </p>
-                ) : (
-                  groups.map(([category, categoryIcons]) => (
-                    <div key={category} className="mb-2">
-                      <p className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-wide text-text-3">
-                        {category}
-                      </p>
-                      <div className="grid grid-cols-5 gap-1">
-                        {categoryIcons.map((icon) => (
-                          <button
-                            key={icon.emoji}
-                            type="button"
-                            onClick={() => {
-                              setValue(icon.emoji);
-                              setOpen(false);
-                              setQuery("");
-                            }}
-                            title={icon.name}
-                            aria-label={icon.name}
-                            className={`flex h-10 w-10 items-center justify-center rounded transition-colors hover:bg-surface-2 ${
-                              normalizeEmoji(icon.emoji) === normalizeEmoji(value)
-                                ? "bg-accent-soft ring-1 ring-accent"
-                                : ""
-                            }`}
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={iconPath(icon.emoji)}
-                              alt=""
-                              className="h-6 w-6"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
             </div>,
             document.body,
           )

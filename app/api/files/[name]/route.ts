@@ -17,7 +17,7 @@ export async function GET(
 
   const { name } = await params;
 
-  if (!/^[a-f0-9]{32}\.(png|jpg|jpeg|webp|gif|avif)$/.test(name)) {
+  if (!/^[a-f0-9]{32}\.(png|jpg|jpeg|webp|gif|avif|heic|heif)$/.test(name)) {
     return new Response("Non trovato", { status: 404 });
   }
 
@@ -31,7 +31,8 @@ export async function GET(
       : name.endsWith(".jpg") || name.endsWith(".jpeg") ? "image/jpeg"
       : name.endsWith(".webp") ? "image/webp"
       : name.endsWith(".gif") ? "image/gif"
-      : "image/avif";
+      : name.endsWith(".avif") ? "image/avif"
+      : "image/heic";
 
     return new Response(new Uint8Array(buffer), {
       headers: {
