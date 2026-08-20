@@ -8,7 +8,7 @@ import { requireUser } from "./auth";
 import { prisma } from "./db";
 
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
-const MAX_SIZE = 5 * 1024 * 1024;
+const MAX_SIZE = 10 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp", "gif", "avif"]);
 
 async function ensureUploadsDir() {

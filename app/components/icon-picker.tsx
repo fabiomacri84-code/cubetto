@@ -54,6 +54,11 @@ export function IconPicker({
   const [query, setQuery] = useState("");
   const [pos, setPos] = useState<Position | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const openedAt = useRef(0);
+  const autoFocus =
+    typeof window !== "undefined" &&
+    (window.matchMedia?.("(pointer: fine)").matches ?? true);
 
   useEffect(() => {
     loadIcons().then(setIcons).catch(() => setIcons([]));
@@ -62,7 +67,18 @@ export function IconPicker({
   useEffect(() => {
     if (!open) return;
 
-    const onScroll = () => setOpen(false);
+    const onScroll = (event: Event) => {
+      const picker = pickerRef.current;
+      if (picker && event.target instanceof Node && picker.contains(event.target)) {
+        return;
+      }
+      // Su iOS l'apertura della tastiera fa scorrere la pagina subito dopo
+      // l'apertura: ignora lo scroll iniziale per non chiudere il selettore.
+      if (Date.now() - openedAt.current < 250) {
+        return;
+      }
+      setOpen(false);
+    };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
@@ -122,6 +138,7 @@ export function IconPicker({
       });
     }
 
+    openedAt.current = Date.now();
     setOpen(true);
   }
 
@@ -143,6 +160,7 @@ export function IconPicker({
       {open && pos
         ? createPortal(
             <div
+              ref={pickerRef}
               className="fixed z-[60] rounded-lg border border-line bg-elevated p-3 shadow-lg"
               style={{ left: pos.left, top: pos.top, bottom: pos.bottom, width: pos.width }}
               role="dialog"
@@ -153,7 +171,7 @@ export function IconPicker({
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Cerca icona…"
-                autoFocus
+                autoFocus={autoFocus}
                 className="mb-2 h-9 w-full rounded-md border border-line-strong bg-subtle px-3 text-sm text-text outline-none placeholder:text-text-3 focus:border-accent"
               />
               <div className="max-h-64 overflow-y-auto pr-1">

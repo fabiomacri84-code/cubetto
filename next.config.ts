@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
     "@prisma/adapter-pg",
     "pg",
   ],
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "12mb",
+    },
+  },
   allowedDevOrigins: ["127.0.0.1"],
   devIndicators: false,
 };
