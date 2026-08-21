@@ -77,7 +77,7 @@ export function AdminPanel({
                       defaultValue={u.role}
                       disabled={isSelf}
                       aria-label={`Ruolo di ${u.name}`}
-                      className="min-h-9 min-w-0 flex-1 rounded-md border border-line-strong bg-subtle px-2 py-1.5 text-sm text-text outline-none focus:border-accent disabled:opacity-50"
+                      className="min-h-10 min-w-0 flex-1 rounded-md border border-line-strong bg-subtle px-2 py-1.5 text-base text-text outline-none focus:border-accent disabled:opacity-50"
                     >
                       <option value="user">Utente</option>
                       <option value="admin">Amministratore</option>

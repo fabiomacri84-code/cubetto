@@ -116,7 +116,7 @@ export function CreateUserSheet() {
                   <select
                     name="role"
                     defaultValue="user"
-                    className="min-h-11 w-full rounded-md border border-line-strong bg-subtle px-3 py-2 text-sm text-text transition-colors duration-150 outline-none focus:border-accent"
+                    className="min-h-11 w-full rounded-md border border-line-strong bg-subtle px-3 py-2 text-base text-text transition-colors duration-150 outline-none focus:border-accent"
                   >
                     <option value="user">Utente</option>
                     <option value="admin">Amministratore</option>

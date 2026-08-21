@@ -89,7 +89,7 @@ export function IconGrid({
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Cerca icona…"
         autoFocus={autoFocus}
-        className="h-9 w-full rounded-md border border-line-strong bg-subtle px-3 text-sm text-text outline-none placeholder:text-text-3 focus:border-accent"
+        className="h-10 w-full rounded-md border border-line-strong bg-subtle px-3 text-base text-text outline-none placeholder:text-text-3 focus:border-accent"
       />
       <div className="mt-2 max-h-64 overflow-y-auto pr-1">
         {groups.length === 0 ? (

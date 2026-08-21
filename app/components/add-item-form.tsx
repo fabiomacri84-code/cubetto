@@ -105,7 +105,7 @@ export function AddItemForm({
             <Field label="Categoria">
               <select
                 name="categoryId"
-                className="min-h-9 w-full rounded-md border border-line-strong bg-subtle px-2 py-1.5 text-sm text-text outline-none focus:border-accent"
+                className="min-h-10 w-full rounded-md border border-line-strong bg-subtle px-2 py-1.5 text-base text-text outline-none focus:border-accent"
               >
                 <option value="">Senza categoria</option>
                 {categories.map((category) => (
