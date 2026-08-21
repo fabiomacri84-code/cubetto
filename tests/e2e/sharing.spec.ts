@@ -38,6 +38,7 @@ test("condivisione: invito, join e sola lettura", async ({ browser }) => {
     await guest.getByLabel("Password").fill(password);
     await guest.getByRole("button", { name: "Crea account" }).click();
 
+    await guest.getByRole("button", { name: "Partecipa con codice invito" }).click();
     await guest.getByPlaceholder("es. A1B2C3D4").fill(code);
     await guest.getByRole("button", { name: "Unisciti" }).click();
 

@@ -46,6 +46,7 @@ test("quantità e inserimento pack", async ({ page }) => {
   await page.getByLabel("Password").fill("password123");
   await page.getByRole("button", { name: "Crea account" }).click();
 
+  await page.locator("summary").filter({ hasText: "I tuoi pack" }).click();
   await page.getByText("Nuovo pack").click();
   await page.getByPlaceholder("es. Valigia estate").fill("Kit bagno test");
   await page.getByRole("button", { name: "Crea pack" }).click();

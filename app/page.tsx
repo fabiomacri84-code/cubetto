@@ -4,10 +4,10 @@ import { logout } from "./auth-actions";
 import { createList, createPack, joinList } from "./actions";
 import { prisma } from "./db";
 import { Button } from "./components/ui/button";
-import { Input } from "./components/ui/input";
 import { IconImage } from "./components/icon-image";
 import { AppShell } from "./components/app-shell";
 import { CreateSheet } from "./components/create-sheet";
+import { JoinSheet } from "./components/join-sheet";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -181,96 +181,84 @@ export default async function Home() {
           )}
         </section>
 
+        {/* ===== Partecipa con codice ===== */}
+        <div className="mt-4">
+          <JoinSheet action={joinList} />
+        </div>
+
         {/* ===== I tuoi pack ===== */}
-        <section className="mt-10">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-xl font-bold tracking-tight text-text">
-              I tuoi pack
-            </h2>
-            <span className="tnum text-xs font-medium text-text-3">
+        <details className="group mt-10">
+          <summary className="flex cursor-pointer list-none items-center gap-2 rounded-2xl border border-line bg-surface px-4 py-3 text-sm font-semibold text-text-2 shadow-sm [&::-webkit-details-marker]:hidden">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-2" aria-hidden>
+              🧳
+            </span>
+            I tuoi pack
+            <span className="tnum rounded-full bg-surface-2 px-2 py-0.5 text-[10px]">
               {packs.length}
             </span>
-          </div>
+            <span className="ml-auto transition-transform group-open:rotate-180" aria-hidden>
+              ▾
+            </span>
+          </summary>
 
-          {packs.length === 0 ? (
-            <div className="card mt-4 flex items-center gap-4 px-5 py-5">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-2xl" aria-hidden>
-                🧳
-              </span>
-              <p className="min-w-0 flex-1 text-sm leading-6 text-text-3">
-                I pack sono raccolte riusabili: creali una volta e usali in
-                ogni lista.
-              </p>
-              <CreateSheet
-                variant="inline"
-                triggerLabel="Nuovo pack"
-                title="Nuovo pack"
-                placeholder="es. Valigia estate"
-                iconInitial="🧳"
-                cta="Crea pack"
-                action={createPack}
-                className="shrink-0"
-              />
-            </div>
-          ) : (
-            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {packs.map((pack) => (
-                <Link
-                  key={pack.id}
-                  href={`/packs/${pack.id}`}
-                  className="card group p-4 transition-transform active:scale-[0.98]"
-                >
-                  <span
-                    className="flex h-12 w-12 items-center justify-center rounded-2xl text-2xl"
-                    style={{ backgroundColor: `${pack.color}1c` }}
-                    aria-hidden
+          <div className="mt-3">
+            {packs.length === 0 ? (
+              <div className="card flex items-center gap-4 px-5 py-5">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-2xl" aria-hidden>
+                  🧳
+                </span>
+                <p className="min-w-0 flex-1 text-sm leading-6 text-text-3">
+                  I pack sono raccolte riusabili: creali una volta e usali in
+                  ogni lista.
+                </p>
+                <CreateSheet
+                  variant="inline"
+                  triggerLabel="Nuovo pack"
+                  title="Nuovo pack"
+                  placeholder="es. Valigia estate"
+                  iconInitial="🧳"
+                  cta="Crea pack"
+                  action={createPack}
+                  className="shrink-0"
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                {packs.map((pack) => (
+                  <Link
+                    key={pack.id}
+                    href={`/packs/${pack.id}`}
+                    className="card group p-4 transition-transform active:scale-[0.98]"
                   >
-                    <IconImage emoji={pack.emoji} className="h-9 w-9" />
-                  </span>
-                  <p className="mt-3 truncate text-[15px] font-bold text-text">
-                    {pack.name}
-                  </p>
-                  <p className="tnum mt-0.5 text-xs text-text-3">
-                    {pack.items.length} elementi
-                  </p>
-                </Link>
-              ))}
+                    <span
+                      className="flex h-12 w-12 items-center justify-center rounded-2xl text-2xl"
+                      style={{ backgroundColor: `${pack.color}1c` }}
+                      aria-hidden
+                    >
+                      <IconImage emoji={pack.emoji} className="h-9 w-9" />
+                    </span>
+                    <p className="mt-3 truncate text-[15px] font-bold text-text">
+                      {pack.name}
+                    </p>
+                    <p className="tnum mt-0.5 text-xs text-text-3">
+                      {pack.items.length} elementi
+                    </p>
+                  </Link>
+                ))}
 
-              <CreateSheet
-                variant="tile"
-                triggerLabel="Nuovo pack"
-                title="Nuovo pack"
-                placeholder="es. Valigia estate"
-                iconInitial="🧳"
-                cta="Crea pack"
-                action={createPack}
-              />
-            </div>
-          )}
-        </section>
-
-        {/* ===== Unisciti a una lista ===== */}
-        <div className="card mt-10 flex items-center gap-2 p-2 pl-4">
-          <p className="hidden shrink-0 text-sm font-semibold text-text-2 sm:block">
-            Unisciti a una lista
-          </p>
-          <span className="text-lg sm:hidden" aria-hidden>
-            🔗
-          </span>
-          <form action={joinList} className="flex min-w-0 flex-1 items-center gap-2">
-            <Input
-              name="inviteCode"
-              type="text"
-              required
-              placeholder="es. A1B2C3D4"
-              className="min-h-11 flex-1 uppercase"
-              aria-label="Codice di invito"
-            />
-            <Button type="submit" variant="primary" size="sm" className="shrink-0">
-              Unisciti
-            </Button>
-          </form>
-        </div>
+                <CreateSheet
+                  variant="tile"
+                  triggerLabel="Nuovo pack"
+                  title="Nuovo pack"
+                  placeholder="es. Valigia estate"
+                  iconInitial="🧳"
+                  cta="Crea pack"
+                  action={createPack}
+                />
+              </div>
+            )}
+          </div>
+        </details>
       </div>
     </AppShell>
   );
