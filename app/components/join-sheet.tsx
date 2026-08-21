@@ -1,12 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
+import type { JoinResult } from "../actions";
 import { Field } from "./ui/field";
 import { Input } from "./ui/input";
 
-type ServerAction = (formData: FormData) => Promise<void>;
-
-export function JoinSheet({ action }: { action: ServerAction }) {
+export function JoinSheet({
+  action,
+}: {
+  action: (formData: FormData) => Promise<JoinResult>;
+}) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -24,12 +27,15 @@ export function JoinSheet({ action }: { action: ServerAction }) {
     setError(null);
 
     try {
-      await action(new FormData(event.currentTarget));
+      const result = await action(new FormData(event.currentTarget));
+      if (result && !result.ok) {
+        setError(result.error);
+        setPending(false);
+        return;
+      }
       setOpen(false);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Qualcosa è andato storto.",
-      );
+    } catch {
+      setError("Qualcosa è andato storto. Riprova.");
       setPending(false);
     }
   }

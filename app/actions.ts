@@ -33,6 +33,8 @@ async function touchList(listId: string) {
 
 /* ---------- Liste ---------- */
 
+export type JoinResult = { ok: false; error: string } | undefined;
+
 export async function createList(formData: FormData) {
   const user = await getUser();
   const name = readText(formData, "name");
@@ -510,7 +512,7 @@ export async function clearInviteCode(formData: FormData) {
   revalidatePath(`/lists/${listId}`);
 }
 
-export async function joinList(formData: FormData) {
+export async function joinList(formData: FormData): Promise<JoinResult> {
   const user = await getUser();
   const inviteCode = readText(formData, "inviteCode").toUpperCase();
 
@@ -520,7 +522,7 @@ export async function joinList(formData: FormData) {
   });
 
   if (!list) {
-    throw new Error("Codice di invito non valido.");
+    return { ok: false, error: "Codice di invito non valido." };
   }
 
   await prisma.listMember.upsert({
