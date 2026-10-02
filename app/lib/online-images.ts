@@ -1,4 +1,5 @@
 import "server-only";
+import { resolveOnlineIcon } from "./online-icons";
 import type { IconSuggestion } from "./icon-types";
 
 type Meta = { value?: string };
@@ -43,6 +44,7 @@ async function cached(key: string, fetcher: () => Promise<IconSuggestion | null>
   return promise;
 }
 export async function resolveSelectedImage(title: string, budget?: AbortSignal): Promise<IconSuggestion | null> {
+  if (title.startsWith("Iconify:")) return resolveOnlineIcon(title);
   if (!validPhotoTitle(title)) return null;
   return cached(`file:${title}`, async () => {
     const [page] = await wiki("commons.wikimedia.org", { titles: title, prop: "imageinfo", iiprop: "url|extmetadata", iiurlwidth: "320" }, budget);

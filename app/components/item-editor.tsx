@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { IconGrid } from "./icon-picker";
+import { OnlineIconChoices } from "./online-icon-choices";
 import { Field } from "./ui/field";
 import { Input } from "./ui/input";
 
@@ -114,6 +115,13 @@ export function ItemEditor({
                       />
                     </label>
                   </form>
+
+                  <OnlineIconChoices name={item.name} onSelect={(icon) => {
+                    const data = new FormData();
+                    data.set("id", item.id); data.set("emoji", item.emoji);
+                    data.set("photoTitle", icon.photoTitle ?? "");
+                    void save(setItemEmoji)(data);
+                  }} />
 
                   <p className="mt-2 pb-2 text-xs font-semibold uppercase tracking-widest text-text-3">
                     Oppure scegli un&apos;icona

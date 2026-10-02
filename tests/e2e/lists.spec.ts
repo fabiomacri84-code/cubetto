@@ -20,18 +20,18 @@ test("ricerca immagine indisponibile: sceglie un’icona manuale e salva", async
   });
   await page.getByText("Nuova lista").click();
   const sheet = page.getByRole("dialog").filter({ has: page.getByPlaceholder("es. Spesa settimanale") });
-  await sheet.getByPlaceholder("es. Spesa settimanale").fill("infradito");
-  await expect(sheet.getByRole("progressbar", { name: "Ricerca immagine" })).toBeVisible();
-  await expect(sheet.getByRole("status")).toHaveText("Immagine non disponibile. Puoi scegliere un’icona a mano.");
+  await sheet.getByPlaceholder("es. Spesa settimanale").fill("Oggetto ignoto QZRT");
+  await expect(sheet.getByRole("progressbar", { name: "Ricerca icone" })).toBeVisible();
+  await expect(sheet.getByRole("status")).toHaveText("Ricerca non disponibile. Puoi scegliere un’icona a mano.");
   await expect(sheet.getByRole("progressbar")).toHaveCount(0);
   await sheet.getByRole("button", { name: "Scegli icona", exact: true }).click();
   await page.getByRole("dialog", { name: "Scegli icona", exact: true }).getByRole("button", { name: "Regalo", exact: true }).click();
   await expect(sheet.locator('input[name="emoji"]')).toHaveValue("🎁");
   await expect(sheet.getByRole("status")).toHaveText("Icona scelta da te.");
   await sheet.getByRole("button", { name: "Crea lista" }).click();
-  await expect(page.getByRole("heading", { name: "infradito", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Oggetto ignoto QZRT", exact: true })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole("heading", { name: "infradito", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Oggetto ignoto QZRT", exact: true })).toBeVisible();
 });
 
 test("crea lista, aggiunge elementi e spunta (rosso → blu)", async ({ page }) => {
@@ -232,7 +232,8 @@ test("icone automatiche, scelta manuale e nessuna categoria nei moduli lista e p
   await expect(sheet.locator('[name="categoryId"]')).toHaveCount(0);
   await expect(sheet.getByLabel("Categoria", { exact: true })).toHaveCount(0);
   await sheet.getByLabel("Nome", { exact: true }).fill("Spazzolino");
-  await expect(sheet.getByRole("progressbar", { name: "Ricerca immagine" })).toBeVisible();
+  await expect(sheet.getByRole("progressbar")).toHaveCount(0);
+  await expect(sheet.getByRole("status")).toHaveText("Icona trovata nel set offline.");
   await expect(sheet.getByRole("button", { name: "Scegli icona", exact: true })).toBeEnabled();
   await expect(sheet.locator('input[name="emoji"]')).toHaveValue("🪥");
   await sheet.getByRole("button", { name: "Scegli icona", exact: true }).click();
@@ -261,4 +262,36 @@ test("icone automatiche, scelta manuale e nessuna categoria nei moduli lista e p
   await sheet.getByRole("button", { name: "Aggiungi", exact: true }).click();
   await page.getByRole("button", { name: "Modifica Latte", exact: true }).click();
   await expect(page.getByRole("dialog", { name: "Modifica Latte" }).locator('input[name="emoji"]').first()).toHaveValue("🥛");
+});
+
+test("seleziona un’icona online per oggetti esistenti in lista e pack", async ({ page }) => {
+  await page.goto("/register");
+  await page.getByLabel("Nome", { exact: true }).fill("Icone online");
+  await page.getByLabel("Email o nome utente", { exact: true }).fill(`online-${crypto.randomUUID()}@cubetto.app`);
+  await page.getByLabel("Password").fill("password123");
+  await page.getByRole("button", { name: "Crea account" }).click();
+  await page.getByText("Nuova lista").click();
+  await page.getByPlaceholder("es. Spesa settimanale").fill("Spesa");
+  await page.getByRole("button", { name: "Crea lista" }).click();
+  for (const kind of ["list", "pack"]) {
+    if (kind === "pack") {
+      await page.goto("/");
+      await page.locator("summary").filter({ hasText: "I tuoi pack" }).click();
+      await page.getByText("Nuovo pack").click();
+      await page.getByPlaceholder("es. Valigia estate").fill("Valigia");
+      await page.getByRole("button", { name: "Crea pack" }).click();
+    }
+    await page.getByText("Aggiungi elemento").click();
+    await page.getByLabel("Nome", { exact: true }).fill("occhiali");
+    await expect(page.getByRole("status")).toHaveText("Icona trovata nel set offline.");
+    await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
+    await page.getByRole("button", { name: "Modifica occhiali", exact: true }).click();
+    await page.route("**/api/icon-suggestion", async (route) => route.fulfill({ json: { emoji: "👓", options: [{emoji:"👓",photoTitle:"Iconify:lucide:glasses",imageUrl:"https://api.iconify.design/lucide/glasses.svg",attribution:"Lucide · ISC",sourceUrl:"https://icon-sets.iconify.design/lucide/glasses/"}] } }));
+    const editor = page.getByRole("dialog", { name: "Modifica occhiali", exact: true });
+    await editor.getByRole("button", { name: "Cerca icone online", exact: true }).click();
+    await editor.getByRole("button", { name: "Scegli icona online 1" }).click();
+    await expect(editor).toHaveCount(0);
+    await page.reload();
+    await expect(page.locator('img[src="https://api.iconify.design/lucide/glasses.svg"]')).toBeVisible();
+  }
 });

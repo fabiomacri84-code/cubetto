@@ -22,14 +22,11 @@ describe("automatic images for all names", () => {
     expect(fetch).toHaveBeenCalledWith(expect.any(URL), expect.objectContaining({ cache: "no-store", signal: expect.any(AbortSignal) }));
   });
 
-  it("still calls the online provider when an object already matches a local emoji", async () => {
-    const fetch = vi.fn(async (url: URL) => response(url.hostname === "commons.wikimedia.org"
-      ? metadata()
-      : { query: { pages: [{ pageimage: "Bread.jpg" }] } }));
-    vi.stubGlobal("fetch", fetch);
+  it("uses a local icon before any online search", async () => {
+    const fetch = vi.fn(); vi.stubGlobal("fetch", fetch);
     const { suggestIcon } = await import("../../app/icon-actions");
-    expect(await suggestIcon("pane")).toMatchObject({ emoji: "🍞", photoTitle: "File:Bread.jpg" });
-    expect(fetch).toHaveBeenCalled();
+    expect(await suggestIcon("occhiali")).toEqual({ emoji: "👓" });
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("falls back to Commons bitmap search when wiki pages only have SVGs", async () => {

@@ -106,7 +106,7 @@ export function CreateSheet({
                 />
               </Field>
 
-              <IconSuggestionField icon={iconSuggestion.icon} status={iconSuggestion.status} onSelect={iconSuggestion.select} onRetry={iconSuggestion.retry} onImageError={iconSuggestion.imageFailed} />
+              <IconSuggestionField icon={iconSuggestion.icon} options={iconSuggestion.options} onChoose={iconSuggestion.choose} status={iconSuggestion.status} onSelect={iconSuggestion.select} onRetry={iconSuggestion.retry} onImageError={iconSuggestion.imageFailed} />
 
               <button
                 type="submit"

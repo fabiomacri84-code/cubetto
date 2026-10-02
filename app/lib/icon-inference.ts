@@ -1,3 +1,4 @@
+import catalog from "../../public/icons.json";
 const OBJECT_KEYWORDS: Record<string, string> = {
   latte: "🥛", uova: "🥚", pane: "🍞", burro: "🧈", formaggio: "🧀",
   yogurt: "🍶", frutta: "🍎", verdura: "🥕", carne: "🥩", pesce: "🐟",
@@ -69,6 +70,11 @@ const keywords = Object.entries({ ...OBJECT_KEYWORDS, ...aliases })
 
 export function matchObjectIcon(name: string): string | null {
   const words = ` ${normalize(name)} `;
+  const normalized = normalize(name);
+  const exact = catalog.find((icon) => normalize(icon.name) === normalized);
+  if (exact) return exact.emoji;
+  const named = catalog.filter((icon) => words.includes(` ${normalize(icon.name)} `)).sort((a,b) => b.name.length-a.name.length)[0];
+  if (named) return named.emoji;
   return keywords.find(([word]) => words.includes(` ${word} `))?.[1] ?? null;
 }
 
