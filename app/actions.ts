@@ -5,6 +5,15 @@ import { redirect } from "next/navigation";
 import crypto from "node:crypto";
 import { requireUser } from "./auth";
 import { prisma } from "./db";
+import { resolveSelectedImage } from "./lib/online-images";
+
+async function selectedPhoto(formData: FormData) {
+  const title = String(formData.get("photoTitle") ?? "").trim();
+  if (!title) return {};
+  const photo = await resolveSelectedImage(title);
+  if (!photo?.imageUrl) return {};
+  return { imageUrl: photo.imageUrl, imageAttribution: photo.attribution ?? null, imageSourceUrl: photo.sourceUrl ?? null, imageSource: "manual" as const };
+}
 
 function readText(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -49,6 +58,7 @@ export async function createList(formData: FormData) {
   const list = await prisma.list.create({
     data: {
       name,
+      ...await selectedPhoto(formData),
       emoji,
       color,
       ownerId: user.id,
@@ -134,6 +144,7 @@ export async function addItem(
     data: {
       listId,
       name,
+      ...await selectedPhoto(formData),
       emoji: readText(formData, "emoji") || "📦",
       quantity: readInt(formData, "quantity", 1),
       checked: readBool(formData, "checked"),
@@ -226,7 +237,7 @@ export async function setItemEmoji(formData: FormData) {
 
   await prisma.item.update({
     where: { id: itemId },
-    data: { emoji, imageUrl: null, imageSource: "emoji" },
+    data: { emoji, imageUrl: null, imageAttribution: null, imageSourceUrl: null, imageSource: "emoji" },
   });
 
   await touchList(item.listId);
@@ -320,6 +331,7 @@ export async function createPack(formData: FormData) {
   const pack = await prisma.pack.create({
     data: {
       name,
+      ...await selectedPhoto(formData),
       emoji: readText(formData, "emoji") || "🧳",
       color: readText(formData, "color") || "#6d28d9",
       ownerId: user.id,
@@ -347,7 +359,9 @@ export async function updatePackMeta(formData: FormData) {
   };
 
   const emoji = readText(formData, "emoji");
-  if (emoji) {
+  if (emoji && emoji !== pack.emoji) {
+    data.imageAttribution = null;
+    data.imageSourceUrl = null;
     data.imageUrl = null;
     data.imageSource = "emoji";
   }
@@ -549,6 +563,7 @@ export async function addPackItem(formData: FormData) {
     data: {
       packId,
       name,
+      ...await selectedPhoto(formData),
       emoji: readText(formData, "emoji") || "📦",
       quantity: readInt(formData, "quantity", 1),
       sortOrder: (last?.sortOrder ?? 0) + 1,
@@ -617,6 +632,8 @@ export async function insertPack(formData: FormData) {
           quantity: item.quantity,
           imageUrl: item.imageUrl,
           imageSource: item.imageSource,
+          imageAttribution: item.imageAttribution,
+          imageSourceUrl: item.imageSourceUrl,
           categoryId: item.categoryId,
           sortOrder: order++,
         },

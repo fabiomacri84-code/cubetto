@@ -21,3 +21,13 @@ Usare branch `codex/`, commit piccoli e PR verificabili; mai force push su main.
 Ogni modifica distribuita in produzione richiede aggiornamento GitHub e nuova versione SemVer. Mantenere allineati `package.json`, `package-lock.json`, `app/version.ts` e badge README; introdurre `app/version.ts` quando si completa il workflow di rilascio. La versione deve essere visibile nell’app. Pubblicare commit, tag annotato `vX.Y.Z` e release GitHub con note e verifiche.
 
 Distribuire il tag esatto, con backup prima delle migrazioni, controllo del servizio e della versione attiva, e procedura di rollback. Non usare credenziali incorporate, non fare reset o seed dei dati di produzione e non usare l’incompleto script di OpenCode archiviato in `.local/import/`.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

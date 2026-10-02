@@ -63,3 +63,13 @@ Il seed è facoltativo e va usato soltanto su un database vuoto di prova. Per ri
 - Audit dipendenze al momento dell’importazione: 11 segnalazioni (10 alte, una critica). Nessun aggiornamento automatico o cambio di major è stato applicato. Esaminare Next.js e le dipendenze segnalate prima del prossimo rilascio. Il rapporto integrale è conservato privatamente.
 
 La CI aggiunta ripete i controlli e gli E2E su PostgreSQL temporaneo. Il ramo rimane una bozza finché problemi e verifiche non sono risolti. Non sono stati creati tag, release o deploy per questa importazione.
+
+## Completamento del lavoro importato
+
+Il 2 ottobre 2026 è stato completato il lavoro interrotto: categorie rimosse dall’interfaccia mantenendo i dati storici, suggerimenti automatici corretti e foto dei luoghi con licenze libere da Wikimedia. Le immagini sono validate sul server e i crediti sono preservati anche quando un pack viene aggiunto a una lista. Sono stati corretti la scelta manuale, le richieste obsolete, le sezioni vuote e gli editor degli elementi dei pack.
+
+Versione preparata: 0.2.0. Sono allineati package, lockfile, `app/version.ts` e badge. La procedura di rilascio è documentata in `docs/RELEASE.md`; lo script originale resta privato e non viene utilizzato.
+
+Verifiche aggiornate: 18 test unitari e 22 E2E superati sul Mac (Chromium desktop e Pixel 7), lint e TypeScript superati. Next.js aggiornato a 16.3.8, Prisma rimane nella major 7. I pin temporanei `deepmerge-ts` 8.0.2 e `mysql2` 3.24.5 correggono dipendenze degli strumenti Prisma; ricontrollarli a ogni aggiornamento Prisma. L’audit attuale non riporta vulnerabilità. La generazione Prisma e le migrazioni sono state verificate sul database temporaneo dedicato.
+
+Accesso al container di produzione verificato: servizio attivo, checkout originale `0070073`, versione 0.1.0 al momento della verifica. Il ramo di sviluppo non va considerato distribuito finché non sono completati CI, pubblicazione e controlli del deploy.

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { IconImage } from "./icon-image";
 import { iconPath, normalizeEmoji } from "../lib/icon-db.generated";
 
 type IconEntry = {
@@ -143,11 +144,18 @@ type Position = {
 export function IconPicker({
   name = "emoji",
   initial = "📦",
+  value: controlledValue,
+  onChange,
+  imageUrl,
 }: {
   name?: string;
   initial?: string;
+  value?: string;
+  onChange?: (emoji: string) => void;
+  imageUrl?: string;
 }) {
-  const [value, setValue] = useState(initial);
+  const [internalValue, setValue] = useState(initial);
+  const value = controlledValue ?? internalValue;
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<Position | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -224,8 +232,10 @@ export function IconPicker({
         aria-expanded={open}
         aria-haspopup="dialog"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={iconPath(value)} alt="" className="h-6 w-6" />
+        {imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imageUrl} alt="Foto suggerita" className="h-9 w-9 rounded object-cover" referrerPolicy="no-referrer" />
+        ) : <IconImage emoji={value} className="h-6 w-6" />}
       </button>
       {open && pos
         ? createPortal(
@@ -240,6 +250,7 @@ export function IconPicker({
                 value={value}
                 onSelect={(emoji) => {
                   setValue(emoji);
+                  onChange?.(emoji);
                   setOpen(false);
                 }}
                 autoFocus={autoFocus}

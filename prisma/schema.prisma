@@ -53,6 +53,10 @@ model List {
   name       String
   emoji      String       @default("🛒")
   color      String       @default("#6d28d9")
+  imageUrl String?
+  imageAttribution String?
+  imageSourceUrl String?
+  imageSource ImageSource @default(emoji)
   inviteCode String?      @unique
   ownerId    String
   owner      User         @relation("OwnedLists", fields: [ownerId], references: [id], onDelete: Cascade)
@@ -108,6 +112,8 @@ model Item {
   checked     Boolean     @default(false)
   stored      Boolean     @default(false)
   imageUrl    String?
+  imageAttribution String?
+  imageSourceUrl String?
   imageSource ImageSource @default(emoji)
   categoryId  String?
   sortOrder   Int         @default(0)
@@ -125,6 +131,8 @@ model Pack {
   emoji       String      @default("🧳")
   color       String      @default("#6d28d9")
   imageUrl    String?
+  imageAttribution String?
+  imageSourceUrl String?
   imageSource ImageSource @default(emoji)
   ownerId     String
   owner       User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
@@ -141,6 +149,8 @@ model PackItem {
   emoji       String      @default("📦")
   quantity    Int         @default(1)
   imageUrl    String?
+  imageAttribution String?
+  imageSourceUrl String?
   imageSource ImageSource @default(emoji)
   categoryId  String?
   sortOrder   Int         @default(0)

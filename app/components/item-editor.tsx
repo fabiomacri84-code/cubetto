@@ -37,14 +37,23 @@ export function ItemEditor({
   const emojiInputRef = useRef<HTMLInputElement>(null);
   const detailFormRef = useRef<HTMLFormElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const closeSoon = () => setTimeout(() => setOpen(false), 60);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const save = (action: ServerAction) => async (data: FormData) => {
+    setPending(true); setError(null);
+    try { await action(data); setOpen(false); }
+    catch (e) { setError(e instanceof Error ? e.message : "Salvataggio non riuscito."); }
+    finally { setPending(false); }
+  };
 
   const trigger = children ? (
-    <>{children}</>
+    <div className={className ?? "relative"}>{children}
+      <button type="button" onClick={() => { setError(null); setOpen(true); }} aria-label={`Modifica ${item.name}`} aria-haspopup="dialog" className="absolute left-3 top-3 h-12 w-12" />
+    </div>
   ) : (
     <button
       type="button"
-      onClick={() => setOpen(true)}
+      onClick={() => { setError(null); setOpen(true); }}
       aria-label={`Modifica ${item.name}`}
       aria-haspopup="dialog"
       className={className ?? "absolute inset-0"}
@@ -84,8 +93,10 @@ export function ItemEditor({
                   </button>
                 </div>
 
-                <div className="mt-4 flex flex-col gap-4 pb-2">
-                  <form action={setItemImage} className="mt-1">
+                <div className="mt-4 flex flex-col gap-4 overflow-y-auto pb-2">
+                  {error ? <p role="alert" className="text-sm text-negative">{error}</p> : null}
+                  <fieldset disabled={pending} className="contents">
+                  <form action={save(setItemImage)} className="mt-1">
                     <input type="hidden" name="id" value={item.id} />
                     <label className="flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line-strong bg-subtle px-4 text-sm font-semibold text-accent-strong transition-colors hover:border-accent hover:bg-accent-soft">
                       <span aria-hidden>📷</span>
@@ -98,7 +109,6 @@ export function ItemEditor({
                         onChange={(event) => {
                           if (event.currentTarget.files?.length) {
                             event.currentTarget.form?.requestSubmit();
-                            closeSoon();
                           }
                         }}
                       />
@@ -108,7 +118,7 @@ export function ItemEditor({
                   <p className="mt-2 pb-2 text-xs font-semibold uppercase tracking-widest text-text-3">
                     Oppure scegli un&apos;icona
                   </p>
-                  <form ref={emojiFormRef} action={setItemEmoji}>
+                  <form ref={emojiFormRef} action={save(setItemEmoji)}>
                     <input type="hidden" name="id" value={item.id} />
                     <input
                       ref={emojiInputRef}
@@ -124,18 +134,16 @@ export function ItemEditor({
                             emojiInputRef.current.value = emoji;
                           }
                           emojiFormRef.current?.requestSubmit();
-                          setTimeout(() => setOpen(false), 300);
                         }}
                       />
                     </div>
                   </form>
 
                   {item.imageUrl ? (
-                    <form action={clearItemImage}>
+                    <form action={save(clearItemImage)}>
                       <input type="hidden" name="id" value={item.id} />
                       <button
                         type="submit"
-                        onClick={closeSoon}
                         className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-line-strong bg-surface px-5 text-sm font-semibold text-negative transition-colors hover:bg-negative-soft"
                       >
                         🗑️ Rimuovi foto
@@ -145,7 +153,7 @@ export function ItemEditor({
 
                   <hr className="border-line my-2" />
 
-                  <form ref={detailFormRef} action={updateItemMeta} className="mt-2 flex flex-col gap-4 pb-2">
+                  <form ref={detailFormRef} action={save(updateItemMeta)} className="mt-2 flex flex-col gap-4 pb-2">
                     <input type="hidden" name="id" value={item.id} />
                     <input type="hidden" name="emoji" value={item.emoji} />
 
@@ -161,12 +169,12 @@ export function ItemEditor({
 
                     <button
                       type="submit"
-                      onClick={closeSoon}
                       className="mt-1 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-strong"
                     >
                       Salva
                     </button>
                   </form>
+                  </fieldset>
                 </div>
               </div>
             </div>,

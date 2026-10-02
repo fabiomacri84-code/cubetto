@@ -17,6 +17,7 @@ import { requireUser } from "../../auth";
 import { prisma } from "../../db";
 import { Button } from "../../components/ui/button";
 import { IconImage } from "../../components/icon-image";
+import { PhotoCredit } from "../../components/photo-credit";
 import { ItemEditor } from "../../components/item-editor";
 import { DeleteItemButton } from "../../components/delete-item-button";
 import { ListRefresher } from "../../components/list-refresher";
@@ -28,6 +29,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function groupByNone(items: GroupableItem[]) {
+  if (items.length === 0) return [];
   return [{
     key: "all",
     name: "",
@@ -49,19 +51,11 @@ function Tile({
   stored?: boolean;
   updateItemMeta: (formData: FormData) => Promise<void>;
 }) {
-  const image = item.imageUrl ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={item.imageUrl}
-      alt=""
-      className="h-full w-full object-cover"
-    />
-  ) : (
-    <IconImage emoji={item.emoji} className="h-8 w-8" />
-  );
+  const image = <IconImage emoji={item.emoji} imageUrl={item.imageUrl} className="h-8 w-8 rounded-lg" />;
 
   return (
     <li className="relative">
+      <PhotoCredit attribution={item.imageAttribution} sourceUrl={item.imageSourceUrl} />
       {stored ? (
         <div className="tile tile-done h-full p-3">
           <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-surface-2 text-2xl opacity-70">
@@ -312,12 +306,13 @@ export default async function ListPage({
               style={{ backgroundColor: `${list.color}1c` }}
               aria-hidden
             >
-              <IconImage emoji={list.emoji} className="h-9 w-9" />
+              <IconImage emoji={list.emoji} imageUrl={list.imageUrl} className="h-9 w-9 rounded-xl" />
             </span>
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-lg font-extrabold tracking-tight text-text">
                 {list.name}
               </h1>
+              <PhotoCredit attribution={list.imageAttribution} sourceUrl={list.imageSourceUrl} />
               <p className="tnum text-xs text-text-3">
                 {completed}/{total} fatti
               </p>

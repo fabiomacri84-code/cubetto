@@ -38,7 +38,14 @@ export function PackEditor({
   const detailFormRef = useRef<HTMLFormElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
-  const closeSoon = () => setTimeout(() => setOpen(false), 60);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const save = (action: ServerAction) => async (data: FormData) => {
+    setPending(true); setError(null);
+    try { await action(data); setOpen(false); }
+    catch (e) { setError(e instanceof Error ? e.message : "Salvataggio non riuscito."); }
+    finally { setPending(false); }
+  };
 
   return (
     <>
@@ -69,6 +76,7 @@ export function PackEditor({
 
                 <div className="mt-4 flex items-center justify-between">
                   <h2 className="text-xl font-bold text-text">{pack.name}</h2>
+                  {error ? <p role="alert" className="text-sm text-negative">{error}</p> : null}
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
@@ -108,7 +116,7 @@ export function PackEditor({
 
                 {activeTab === "image" ? (
                   <div className="mt-4 flex flex-col gap-4 pb-2">
-                    <form action={setPackImage} className="mt-1">
+                    <form action={save(setPackImage)} className="mt-1">
                       <input type="hidden" name="id" value={pack.id} />
                       <label className="flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line-strong bg-subtle px-4 text-sm font-semibold text-accent-strong transition-colors hover:border-accent hover:bg-accent-soft">
                         <span aria-hidden>📷</span>
@@ -121,7 +129,7 @@ export function PackEditor({
                           onChange={(event) => {
                             if (event.currentTarget.files?.length) {
                               event.currentTarget.form?.requestSubmit();
-                              closeSoon();
+
                             }
                           }}
                         />
@@ -131,7 +139,7 @@ export function PackEditor({
                     <p className="mt-2 pb-2 text-xs font-semibold uppercase tracking-widest text-text-3">
                       Oppure scegli un&apos;icona
                     </p>
-                    <form ref={emojiFormRef} action={setPackEmoji}>
+                    <form ref={emojiFormRef} action={save(setPackEmoji)}>
                       <input type="hidden" name="id" value={pack.id} />
                       <input
                         ref={emojiInputRef}
@@ -147,18 +155,18 @@ export function PackEditor({
                               emojiInputRef.current.value = emoji;
                             }
                             emojiFormRef.current?.requestSubmit();
-                            setTimeout(() => setOpen(false), 300);
+
                           }}
                         />
                       </div>
                     </form>
 
                     {pack.imageUrl ? (
-                      <form action={clearPackImage}>
+                      <form action={save(clearPackImage)}>
                         <input type="hidden" name="id" value={pack.id} />
                         <button
                           type="submit"
-                          onClick={closeSoon}
+                          disabled={pending}
                           className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-line-strong bg-surface px-5 text-sm font-semibold text-negative transition-colors hover:bg-negative-soft"
                         >
                           🗑️ Rimuovi foto
@@ -167,7 +175,7 @@ export function PackEditor({
                     ) : null}
                   </div>
                 ) : (
-                  <form ref={detailFormRef} action={updatePackMeta} className="mt-4 flex flex-col gap-4 pb-2">
+                  <form ref={detailFormRef} action={save(updatePackMeta)} className="mt-4 flex flex-col gap-4 pb-2">
                     <input type="hidden" name="id" value={pack.id} />
                     <input type="hidden" name="emoji" value={pack.emoji} />
                     <input type="hidden" name="color" value={pack.color} />
@@ -194,7 +202,7 @@ export function PackEditor({
 
                     <button
                       type="submit"
-                      onClick={closeSoon}
+                      disabled={pending}
                       className="mt-1 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-strong"
                     >
                       Salva

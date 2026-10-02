@@ -71,7 +71,7 @@ export async function setItemImage(formData: FormData) {
 
   await prisma.item.update({
     where: { id: itemId },
-    data: { imageUrl: `/api/files/${storedName}`, imageSource: "manual" },
+    data: { imageAttribution: null, imageSourceUrl: null, imageUrl: `/api/files/${storedName}`, imageSource: "manual" },
   });
 
   await prisma.list.update({
@@ -101,7 +101,7 @@ export async function clearItemImage(formData: FormData) {
 
   await prisma.item.update({
     where: { id: itemId },
-    data: { imageUrl: null, imageSource: "emoji" },
+    data: { imageAttribution: null, imageSourceUrl: null, imageUrl: null, imageSource: "emoji" },
   });
 
   await prisma.list.update({
@@ -136,7 +136,7 @@ export async function setItemEmoji(formData: FormData) {
 
   await prisma.item.update({
     where: { id: itemId },
-    data: { emoji, imageUrl: null, imageSource: "emoji" },
+    data: { emoji, imageAttribution: null, imageSourceUrl: null, imageUrl: null, imageSource: "emoji" },
   });
 
   await prisma.list.update({
@@ -169,7 +169,9 @@ export async function updateItemMeta(formData: FormData) {
 
   const data: Record<string, unknown> = {};
   if (name) data.name = name;
-  if (emoji) {
+  if (emoji && emoji !== item.emoji) {
+    data.imageAttribution = null;
+    data.imageSourceUrl = null;
     data.emoji = emoji;
     data.imageUrl = null;
     data.imageSource = "emoji";
@@ -210,7 +212,7 @@ export async function setPackItemImage(formData: FormData) {
 
   await prisma.packItem.update({
     where: { id: itemId },
-    data: { imageUrl: `/api/files/${storedName}`, imageSource: "manual" },
+    data: { imageAttribution: null, imageSourceUrl: null, imageUrl: `/api/files/${storedName}`, imageSource: "manual" },
   });
 
   revalidatePath(`/packs/${item.packId}`);
@@ -231,7 +233,7 @@ export async function clearPackItemImage(formData: FormData) {
 
   await prisma.packItem.update({
     where: { id: itemId },
-    data: { imageUrl: null, imageSource: "emoji" },
+    data: { imageAttribution: null, imageSourceUrl: null, imageUrl: null, imageSource: "emoji" },
   });
 
   revalidatePath(`/packs/${item.packId}`);
@@ -258,7 +260,7 @@ export async function setPackImage(formData: FormData) {
 
   await prisma.pack.update({
     where: { id: packId },
-    data: { imageUrl: `/api/files/${storedName}`, imageSource: "manual" },
+    data: { imageAttribution: null, imageSourceUrl: null, imageUrl: `/api/files/${storedName}`, imageSource: "manual" },
   });
 
   revalidatePath(`/packs/${packId}`);
@@ -278,7 +280,7 @@ export async function clearPackImage(formData: FormData) {
 
   await prisma.pack.update({
     where: { id: packId },
-    data: { imageUrl: null, imageSource: "emoji" },
+    data: { imageAttribution: null, imageSourceUrl: null, imageUrl: null, imageSource: "emoji" },
   });
 
   revalidatePath(`/packs/${packId}`);
@@ -303,7 +305,7 @@ export async function setPackEmoji(formData: FormData) {
 
   await prisma.pack.update({
     where: { id: packId },
-    data: { emoji, imageUrl: null, imageSource: "emoji" },
+    data: { emoji, imageAttribution: null, imageSourceUrl: null, imageUrl: null, imageSource: "emoji" },
   });
 
   revalidatePath(`/packs/${packId}`);
@@ -327,7 +329,9 @@ export async function updatePackItemMeta(formData: FormData) {
 
   const data: Record<string, unknown> = {};
   if (name) data.name = name;
-  if (emoji) {
+  if (emoji && emoji !== item.emoji) {
+    data.imageAttribution = null;
+    data.imageSourceUrl = null;
     data.emoji = emoji;
     data.imageUrl = null;
     data.imageSource = "emoji";
@@ -350,4 +354,14 @@ export async function removeOrphanUpload(fileUrl: string) {
   }
 
   await fs.unlink(path.join(UPLOADS_DIR, name)).catch(() => {});
+}
+export async function setPackItemEmoji(formData: FormData) {
+  const user = await requireUser();
+  const id = String(formData.get("id") ?? "").trim();
+  const emoji = String(formData.get("emoji") ?? "").trim();
+  if (!emoji) throw new Error("Emoji obbligatoria.");
+  const item = await prisma.packItem.findUnique({ where: { id }, include: { pack: true } });
+  if (!item || item.pack.ownerId !== user.id) throw new Error("Non puoi modificare questo pack.");
+  await prisma.packItem.update({ where: { id }, data: { emoji, imageUrl: null, imageAttribution: null, imageSourceUrl: null, imageSource: "emoji" } });
+  revalidatePath(`/packs/${item.packId}`);
 }

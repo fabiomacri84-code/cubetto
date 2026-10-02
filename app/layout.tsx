@@ -1,11 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import packageJson from "../package.json";
+import { APP_VERSION } from "./version";
 import { ServiceWorkerRegistration } from "./components/service-worker";
 import { FocusGuard } from "./components/focus-guard";
 import { SWAutoUpdate } from "./components/sw-auto-update";
 
-const APP_VERSION = packageJson.version;
 
 export const metadata: Metadata = {
   applicationName: "Cubetto",
@@ -55,7 +54,9 @@ export default function RootLayout({
         <ServiceWorkerRegistration />
         <FocusGuard />
         <SWAutoUpdate />
-        <div className="sr-only">Cubetto v{APP_VERSION}</div>
+        <div className="px-4 py-2 text-center text-[10px] text-text-3 lg:hidden">
+          Cubetto v{APP_VERSION}
+        </div>
       </body>
     </html>
   );

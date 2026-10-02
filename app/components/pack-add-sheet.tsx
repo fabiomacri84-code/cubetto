@@ -1,8 +1,7 @@
 "use client";
 
 import { addPackItem } from "../actions";
-import { AddSheet, type AddSheetAction, type IconInfer } from "./add-sheet";
-import { inferIcon } from "../lib/icon-inference";
+import { AddSheet, type AddSheetAction } from "./add-sheet";
 
 type Suggestion = {
   name: string;
@@ -21,7 +20,6 @@ export function PackAddSheet({
     await addPackItem(formData);
     return { ok: true };
   };
-  const iconInfer: IconInfer = inferIcon;
 
   return (
     <AddSheet
@@ -29,7 +27,6 @@ export function PackAddSheet({
       action={action}
       suggestions={suggestions}
       iconInitial="📦"
-      onIconInfer={iconInfer}
     />
   );
 }

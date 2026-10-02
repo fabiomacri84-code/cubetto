@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const email = `utente-${Date.now()}@cubetto.app`;
+const email = `utente-${crypto.randomUUID()}@cubetto.app`;
 const password = "password123";
 
 test("registrazione, logout e login", async ({ page }) => {
@@ -31,7 +31,7 @@ test("password errata mostra l'errore", async ({ page }) => {
 });
 
 test("cambio password dalle impostazioni", async ({ page }) => {
-  const changeEmail = `cambio-${Date.now()}@cubetto.app`;
+  const changeEmail = `cambio-${crypto.randomUUID()}@cubetto.app`;
   await page.goto("/register");
   await page.getByLabel("Nome", { exact: true }).fill("Test");
   await page.getByLabel("Email o nome utente", { exact: true }).fill(changeEmail);
@@ -61,8 +61,8 @@ test("setup reindirizza al login quando ci sono già utenti", async ({ page }) =
 });
 
 test("l'admin gestisce le utenze", async ({ page }) => {
-  const adminName = `Admin ${Date.now()}`;
-  const adminEmail = `admin-${Date.now()}`;
+  const adminName = `Admin ${crypto.randomUUID()}`;
+  const adminEmail = `admin-${crypto.randomUUID()}`;
 
   await page.goto("/login");
   await page.getByLabel("Email o nome utente", { exact: true }).fill("fabio");

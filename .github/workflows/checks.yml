@@ -33,6 +33,8 @@ jobs:
     env:
       CI: true
       DATABASE_URL: postgresql://cubetto:cubetto@127.0.0.1:5432/cubetto_ci
+      E2E_DATABASE_URL: postgresql://cubetto:cubetto@127.0.0.1:5432/cubetto_ci
+      E2E_ALLOW_DISPOSABLE_DATABASE: "1"
       AUTH_SECURE_COOKIES: "false"
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4

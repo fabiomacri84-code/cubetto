@@ -1,113 +1,38 @@
-const CACHE = "cubetto-v3";
-const CORE_ASSETS = [
-  "/",
-  "/manifest.webmanifest",
-  "/pwa-icon-192.png",
-  "/pwa-icon-512.png",
-];
+// Cache only public, immutable assets. Never store HTML, personal data or uploads.
+const CACHE = "cubetto-public-v4";
+const CORE_ASSETS = ["/pwa-icon-192.png", "/pwa-icon-512.png"];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(CORE_ASSETS)),
-  );
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(CORE_ASSETS)));
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))),
-      )
-      .then(() => self.clients.claim()),
+    caches.keys().then((keys) => Promise.all(
+      keys.filter((key) => key.startsWith("cubetto-") && key !== CACHE)
+        .map((key) => caches.delete(key)),
+    )).then(() => self.clients.claim()),
   );
 });
 
 self.addEventListener("message", (event) => {
-  if (event.data === "skipWaiting") {
-    self.skipWaiting();
-  }
+  if (event.data === "skipWaiting") self.skipWaiting();
 });
-
-setInterval(() => {
-  self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
-    clients.forEach((client) => {
-      client.postMessage({ type: "VERSION_CHECK", version: CACHE });
-    });
-  });
-}, 60000);
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-
-  if (request.method !== "GET") {
-    return;
-  }
-
   const url = new URL(request.url);
-
-  if (url.origin !== self.location.origin) {
-    return;
-  }
-
-  // API: sempre rete
-  if (url.pathname.startsWith("/api/")) {
-    event.respondWith(fetch(request));
-    return;
-  }
-
-  // Payload RSC / navigazioni client di Next.js: sempre rete, mai cache
-  if (
-    request.headers.get("rsc") === "1" ||
-    request.headers.get("next-router-state-tree") ||
-    request.headers.get("next-router-prefetch") ||
-    request.headers.get("next-router-segment-prefetch")
-  ) {
-    event.respondWith(fetch(request));
-    return;
-  }
-
-  // Asset statici immutabili di Next: cache-first
-  if (url.pathname.startsWith("/_next/static/")) {
-    event.respondWith(
-      caches.match(request).then(
-        (cached) =>
-          cached ??
-          fetch(request).then((response) => {
-            const copy = response.clone();
-            caches.open(CACHE).then((cache) => cache.put(request, copy));
-            return response;
-          }),
-      ),
-    );
-    return;
-  }
-
-  // Navigazioni: network-first con fallback alla shell per l'offline
-  if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put("/", copy));
-          return response;
-        })
-        .catch(() => caches.match("/")),
-    );
-    return;
-  }
-
-  // Altri GET (manifest, icone): cache-first
-  event.respondWith(
-    caches.match(request).then(
-      (cached) =>
-        cached ??
-        fetch(request).then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put(request, copy));
-          return response;
-        }),
-    ),
-  );
+  if (request.method !== "GET" || url.origin !== self.location.origin) return;
+  const publicAsset = url.pathname.startsWith("/_next/static/") ||
+    CORE_ASSETS.includes(url.pathname);
+  if (!publicAsset || request.mode === "navigate" ||
+      request.headers.get("rsc") === "1") return;
+  event.respondWith(caches.open(CACHE).then(async (cache) => {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    const response = await fetch(request);
+    if (response.ok) await cache.put(request, response.clone());
+    return response;
+  }));
 });

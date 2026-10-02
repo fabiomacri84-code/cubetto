@@ -52,64 +52,27 @@ const OBJECT_KEYWORDS: Record<string, string> = {
   festa: "🎉", matrimonio: "💍", anniversario: "💍",
 };
 
-async function geocodePlace(name: string): Promise<string | null> {
-  try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(name)}&limit=1&accept-language=it`;
-    const res = await fetch(url, { headers: { "User-Agent": "Cubetto/0.1" } });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data.length) return null;
-
-    const place = data[0];
-    const category = place.category?.toLowerCase() ?? "";
-    const type = place.type?.toLowerCase() ?? "";
-
-    if (category.includes("tourism") || type.includes("attraction")) return "🏛️";
-    if (category.includes("historic")) return "🏛️";
-    if (category.includes("natural")) return "🏞️";
-    if (category.includes("leisure") || type.includes("park")) return "🌳";
-    if (category.includes("shop") || type.includes("market")) return "🛒";
-    if (category.includes("amenity") && (type.includes("restaurant") || type.includes("cafe") || type.includes("food"))) return "🍽️";
-    if (category.includes("amenity") && type.includes("bar")) return "🍻";
-    if (category.includes("amenity") && type.includes("pharmacy")) return "💊";
-    if (category.includes("amenity") && type.includes("hospital")) return "🏥";
-    if (category.includes("amenity") && type.includes("school")) return "🏫";
-    if (category.includes("amenity") && type.includes("university")) return "🎓";
-    if (category.includes("tourism") && type.includes("hotel")) return "🏨";
-    if (category.includes("tourism") && type.includes("camp_site")) return "⛺";
-    if (category.includes("transport") && type.includes("station")) return "🚂";
-    if (category.includes("transport") && type.includes("airport")) return "✈️";
-    if (category.includes("place") && (type.includes("city") || type.includes("town") || type.includes("village"))) return "🏙️";
-    if (category.includes("place") && type.includes("country")) return "🌍";
-    if (category.includes("place") && type.includes("island")) return "🏝️";
-    if (category.includes("water") || type.includes("beach")) return "🏖️";
-    if (category.includes("mountain") || type.includes("peak")) return "⛰️";
-
-    return "📍";
-  } catch {
-    return null;
-  }
+function normalize(value: string): string {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
 
-function matchKeywords(name: string): string | null {
-  const normalized = name.toLowerCase().trim();
+const aliases: Record<string, string> = {
+  pomodori: "🍅", carote: "🥕", patate: "🥔", cipolle: "🧅", peperoni: "🫑",
+  zucchine: "🥒", melanzane: "🍆", magliette: "👕", giacche: "🧥",
+  asciugamani: "🧺", spazzolini: "🪥", rasoi: "🪒", cavi: "🔌",
+  caricatori: "🔌", passaporti: "📘", valigie: "🧳", zaini: "🎒",
+  "burro di arachidi": "🥜", "carta di identita": "🪪", "carta di credito": "💳",
+};
+const keywords = Object.entries({ ...OBJECT_KEYWORDS, ...aliases })
+  .map(([word, emoji]) => [normalize(word), emoji] as const)
+  .sort((a, b) => b[0].length - a[0].length);
 
-  for (const [keyword, emoji] of Object.entries(OBJECT_KEYWORDS)) {
-    if (normalized.includes(keyword)) {
-      return emoji;
-    }
-  }
-  return null;
+export function matchObjectIcon(name: string): string | null {
+  const words = ` ${normalize(name)} `;
+  return keywords.find(([word]) => words.includes(` ${word} `))?.[1] ?? null;
 }
 
+/** Local inference never transmits names to third parties. */
 export async function inferIcon(name: string): Promise<string> {
-  if (!name || !name.trim()) return "📦";
-
-  const keywordMatch = matchKeywords(name);
-  if (keywordMatch) return keywordMatch;
-
-  const placeIcon = await geocodePlace(name);
-  if (placeIcon) return placeIcon;
-
-  return "📦";
+  return matchObjectIcon(name) ?? "📦";
 }

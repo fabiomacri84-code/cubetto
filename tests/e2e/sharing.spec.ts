@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 test("condivisione: invito, join e sola lettura", async ({ browser }) => {
-  const ownerEmail = `owner-${Date.now()}@cubetto.app`;
-  const guestEmail = `guest-${Date.now()}@cubetto.app`;
+  const ownerEmail = `owner-${crypto.randomUUID()}@cubetto.app`;
+  const guestEmail = `guest-${crypto.randomUUID()}@cubetto.app`;
   const password = "password123";
 
   const ownerContext = await browser.newContext();

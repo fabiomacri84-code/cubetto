@@ -1,8 +1,7 @@
 "use client";
 
 import { addItem } from "../actions";
-import { AddSheet, type AddSheetAction, type IconInfer } from "./add-sheet";
-import { inferIcon } from "../lib/icon-inference";
+import { AddSheet, type AddSheetAction } from "./add-sheet";
 
 type Suggestion = {
   name: string;
@@ -18,7 +17,6 @@ export function ListAddSheet({
   suggestions: Suggestion[];
 }) {
   const action: AddSheetAction = async (formData) => addItem({ ok: false }, formData);
-  const iconInfer: IconInfer = inferIcon;
 
   return (
     <AddSheet
@@ -26,7 +24,6 @@ export function ListAddSheet({
       action={action}
       suggestions={suggestions}
       iconInitial="📦"
-      onIconInfer={iconInfer}
     />
   );
 }

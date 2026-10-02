@@ -5,6 +5,7 @@ import { createList, createPack, joinList } from "./actions";
 import { prisma } from "./db";
 import { Button } from "./components/ui/button";
 import { IconImage } from "./components/icon-image";
+import { PhotoCredit } from "./components/photo-credit";
 import { AppShell } from "./components/app-shell";
 import { CreateSheet } from "./components/create-sheet";
 import { JoinSheet } from "./components/join-sheet";
@@ -141,7 +142,7 @@ export default async function Home() {
                         style={{ backgroundColor: `${list.color}1c` }}
                         aria-hidden
                       >
-                        <IconImage emoji={list.emoji} className="h-9 w-9" />
+                        <IconImage emoji={list.emoji} imageUrl={list.imageUrl} className="h-9 w-9 rounded-xl" />
                       </span>
                       {!isOwner ? (
                         <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-semibold text-accent-strong">
@@ -152,6 +153,7 @@ export default async function Home() {
                     <p className="mt-3 truncate text-[15px] font-bold text-text">
                       {list.name}
                     </p>
+                    <PhotoCredit attribution={list.imageAttribution} sourceUrl={list.imageSourceUrl} link={false} />
                     <p className="tnum mt-0.5 text-xs text-text-3">
                       {done}/{total} fatti
                     </p>
@@ -235,11 +237,12 @@ export default async function Home() {
                       style={{ backgroundColor: `${pack.color}1c` }}
                       aria-hidden
                     >
-                      <IconImage emoji={pack.emoji} className="h-9 w-9" />
+                      <IconImage emoji={pack.emoji} imageUrl={pack.imageUrl} className="h-9 w-9 rounded-xl" />
                     </span>
                     <p className="mt-3 truncate text-[15px] font-bold text-text">
                       {pack.name}
                     </p>
+                    <PhotoCredit attribution={pack.imageAttribution} sourceUrl={pack.imageSourceUrl} link={false} />
                     <p className="tnum mt-0.5 text-xs text-text-3">
                       {pack.items.length} elementi
                     </p>

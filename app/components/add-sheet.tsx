@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Field } from "./ui/field";
 import { Input } from "./ui/input";
-import { IconPicker } from "./icon-picker";
+import { IconSuggestionField, useIconSuggestion } from "./icon-suggestion";
+import { IconImage } from "./icon-image";
 
 type Suggestion = {
   name: string;
@@ -13,7 +14,6 @@ type Suggestion = {
 type ActionResult = { ok: boolean; error?: string };
 
 export type AddSheetAction = (formData: FormData) => Promise<ActionResult>;
-export type IconInfer = (name: string) => Promise<string>;
 
 export function AddSheet({
   fabLabel = "Aggiungi elemento",
@@ -24,7 +24,6 @@ export function AddSheet({
   hidden,
   action,
   suggestions,
-  onIconInfer,
 }: {
   fabLabel?: string;
   title?: string;
@@ -34,25 +33,20 @@ export function AddSheet({
   hidden: { name: string; value: string };
   action: AddSheetAction;
   suggestions: Suggestion[];
-  onIconInfer?: IconInfer;
 }) {
   const [open, setOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [query, setQuery] = useState("");
-  const [currentIcon, setCurrentIcon] = useState(iconInitial);
+  const iconSuggestion = useIconSuggestion(iconInitial);
   const nameRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const inferTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const inferAbort = useRef<AbortController | null>(null);
 
   useEffect(() => {
     return () => {
       if (toastTimer.current) clearTimeout(toastTimer.current);
-      if (inferTimer.current) clearTimeout(inferTimer.current);
-      if (inferAbort.current) inferAbort.current.abort();
     };
   }, []);
 
@@ -64,30 +58,14 @@ export function AddSheet({
       .slice(0, 8);
   }, [query, suggestions]);
 
-  const inferIcon = useCallback(async (name: string) => {
-    if (!onIconInfer || !name.trim()) return;
-    if (inferAbort.current) inferAbort.current.abort();
-    inferAbort.current = new AbortController();
-    try {
-      const emoji = await onIconInfer(name);
-      if (!inferAbort.current.signal.aborted) {
-        setCurrentIcon(emoji);
-      }
-    } catch {
-    }
-  }, [onIconInfer]);
-
   const handleNameChange = (value: string) => {
     setQuery(value);
-    if (inferTimer.current) clearTimeout(inferTimer.current);
-    inferTimer.current = setTimeout(() => {
-      inferIcon(value);
-    }, 300);
+    iconSuggestion.change(value);
   };
 
   function openSheet() {
     setQuery("");
-    setCurrentIcon(iconInitial);
+    iconSuggestion.reset();
     setError(null);
     setOpen(true);
     requestAnimationFrame(() => nameRef.current?.focus());
@@ -97,8 +75,7 @@ export function AddSheet({
     setOpen(false);
     setError(null);
     setPending(false);
-    if (inferTimer.current) clearTimeout(inferTimer.current);
-    if (inferAbort.current) inferAbort.current.abort();
+    iconSuggestion.cancel();
   }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -201,11 +178,11 @@ export function AddSheet({
                       type="button"
                       onClick={() => {
                         setQuery(suggestion.name);
-                        setCurrentIcon(suggestion.emoji);
+                        iconSuggestion.select(suggestion.emoji);
                       }}
                       className="chip flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-text-2 hover:bg-subtle"
                     >
-                      <span aria-hidden>{suggestion.emoji}</span>
+                      <IconImage emoji={suggestion.emoji} className="h-5 w-5" />
                       <span className="max-w-40 truncate">{suggestion.name}</span>
                     </button>
                   ))}
@@ -223,10 +200,7 @@ export function AddSheet({
                 />
               </Field>
 
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold text-text-2">Icona</span>
-                <IconPicker initial={currentIcon} />
-              </div>
+              <IconSuggestionField icon={iconSuggestion.icon} onSelect={iconSuggestion.select} />
 
               {error ? (
                 <p className="rounded-xl border border-negative/30 bg-negative-soft px-3 py-2 text-sm text-negative">

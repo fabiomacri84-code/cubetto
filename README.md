@@ -1,19 +1,21 @@
 # Cubetto
 
-![Versione](https://img.shields.io/badge/versione-0.1.0-blue)
+![Versione](https://img.shields.io/badge/versione-0.2.0-blue)
 
-> Importazione da OpenCode in corso di verifica: questo ramo contiene modifiche non ancora rilasciate. Leggere [stato e istruzioni di importazione](docs/IMPORT.md). La versione 0.1.0 è quella ereditata dal progetto.
+> Versione 0.2.0: icone automatiche, foto dei luoghi da Wikimedia e rilascio versionato. Vedi [procedura di rilascio](docs/RELEASE.md) e [storico di importazione](docs/IMPORT.md).
 
 
 > La lista della spesa (e non solo) che si condivide, si svuota e si aggiorna in tempo reale. Zero budget, zero fronzoli: solo quello che serve per non dimenticare nulla.
 
-**Cubetto** è una PWA per gestire liste condivise con amici, famiglia o colleghi. Puoi creare una lista, riempirla con gli item che preferisci, assegnarli alle categorie, aggiungere foto e quantità, e condividere tutto con un semplice codice di invito.
+**Cubetto** è una PWA per gestire liste condivise con amici, famiglia o colleghi. Puoi creare una lista, riempirla con gli item che preferisci, aggiungere foto e quantità, e condividere tutto con un semplice codice di invito.
 
 ## Funzionalità
 
 - **Liste condivise** — inviti tramite codice, con ruoli *proprietario*, *editor* e *sola lettura*.
 - **Item ricchi** — nome, quantità, categoria, note e foto dal dispositivo.
-- **Categorie & Pack** — organizza le tue liste per categoria e parti da template pronti (spesa, valigia, ecc.).
+- **Pack** — raccolte riutilizzabili per spesa, valigia e altre attività, senza categorie nell’interfaccia.
+- **Icone automatiche** — suggerimenti dal nome dell’oggetto, con scelta manuale sempre disponibile.
+- **Foto dei luoghi** — suggerimenti da Wikimedia Commons per città come Verona, con autore e licenza visibili. La disponibilità dipende dal catalogo e dalla connessione.
 - **Pallino presenza** — vedi chi è online sulla stessa lista e la pagina si aggiorna da sola quando gli altri modificano qualcosa. Niente più refresh manuale.
 - **Svuota & Cassetto** — svuota la lista dei fatti e da fare in un colpo: gli item finiscono nel *cassetto* e puoi riprenderli quando ti servono.
 - **Icone emoji autohostate** — 223 icone Twemoji servite localmente, senza dipendenze esterne, con un picker con ricerca.
@@ -34,14 +36,16 @@ npm install
 cp .env.example .env          # punta al tuo PostgreSQL (es. via docker-compose)
 npx prisma migrate deploy
 npm run seed                  # crea utenti demo, categorie, liste e pack
-npm run dev                   # http://localhost:3100
+npm run dev -- --port 3100     # http://localhost:3100
 ```
 
 Test:
 
 ```bash
 npm test                      # unit test (Vitest)
-npm run test:e2e              # test end-to-end (Playwright)
+E2E_DATABASE_URL="postgresql://cubetto:cubetto@127.0.0.1:5433/cubetto_test" E2E_ALLOW_DISPOSABLE_DATABASE=1 npm run test:e2e
+# Il database cubetto_test deve essere temporaneo, creato prima dei test.
+# Mai usare il database originale o di produzione.
 npm run lint && npm run typecheck
 ```
 
@@ -66,7 +70,9 @@ Puoi accedere con il nome utente (o un'email) e cambiare la password dalla pagin
 
 - [x] Liste condivise con codici di invito e ruoli
 - [x] Item con foto, quantità, note e categorie
-- [x] Pack pronti e categorie personalizzate
+- [x] Pack pronti e riutilizzabili
+- [x] Icone automatiche e fotografie dei luoghi
+- [x] Rilascio con versione, tag, release e verifiche
 - [x] Picker di icone emoji autohostate
 - [x] Cassetto e svuotamento rapido
 - [x] Presenza in tempo reale e auto-aggiornamento
