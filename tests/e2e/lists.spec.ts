@@ -125,11 +125,11 @@ test("cambia immagine di un item dal tile: icona e foto", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Fatto" }).filter({ hasText: "Mele" })).toBeVisible();
 
   const tile = page.locator("li").filter({ hasText: "Mele" }).first();
-  const editorButton = page.getByRole("button", { name: "Cambia immagine di Mele" });
+  const editorButton = page.getByRole("button", { name: "Modifica Mele" });
   await expect(editorButton).toBeVisible();
   await editorButton.click();
 
-  const dialog = page.getByRole("dialog", { name: "Cambia immagine" });
+  const dialog = page.getByRole("dialog", { name: "Modifica Mele" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText("Scatta o scegli una foto")).toBeVisible();
   await expect(dialog.getByText(/Oppure scegli un'icona/)).toBeVisible();

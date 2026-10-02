@@ -8,6 +8,7 @@ export type GroupableItem = {
   imageUrl: string | null;
   sortOrder: number;
   category: { id: string; name: string; emoji: string } | null;
+  categoryId: string | null;
 };
 
 export type CategoryGroup = {

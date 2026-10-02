@@ -11,14 +11,13 @@ import {
   setMemberRole,
   removeMember,
   toggleItem,
-  setItemEmoji,
 } from "../../actions";
-import { setItemImage, clearItemImage } from "../../images-actions";
+import { setItemImage, clearItemImage, setItemEmoji, updateItemMeta } from "../../images-actions";
 import { requireUser } from "../../auth";
 import { prisma } from "../../db";
 import { Button } from "../../components/ui/button";
 import { IconImage } from "../../components/icon-image";
-import { ItemImageEditor } from "../../components/item-image-editor";
+import { ItemEditor } from "../../components/item-editor";
 import { DeleteItemButton } from "../../components/delete-item-button";
 import { ListRefresher } from "../../components/list-refresher";
 import { ListAddSheet } from "../../components/list-add-sheet";
@@ -34,11 +33,15 @@ function Tile({
   canEdit,
   isOwner,
   stored = false,
+  categories,
+  updateItemMeta,
 }: {
   item: GroupableItem;
   canEdit: boolean;
   isOwner: boolean;
   stored?: boolean;
+  categories: { id: string; name: string; emoji: string }[];
+  updateItemMeta: (formData: FormData) => Promise<void>;
 }) {
   const image = item.imageUrl ? (
     // eslint-disable-next-line @next/next/no-img-element
@@ -100,11 +103,13 @@ function Tile({
           </form>
 
           {isOwner ? (
-            <ItemImageEditor
+            <ItemEditor
               item={item}
               setItemImage={setItemImage}
               setItemEmoji={setItemEmoji}
               clearItemImage={clearItemImage}
+              updateItemMeta={updateItemMeta}
+              categories={categories}
               className="absolute left-3 top-3 h-12 w-12"
             />
           ) : null}
@@ -219,6 +224,11 @@ export default async function ListPage({
     notFound();
   }
 
+  const itemsWithCategoryId = list.items.map((item) => ({
+    ...item,
+    categoryId: item.category?.id ?? null,
+  }));
+
   const membership = list.members.find((m) => m.userId === user.id);
 
   if (!membership) {
@@ -242,15 +252,15 @@ export default async function ListPage({
     ).map((p) => p.userId),
   );
 
-  const todo = groupByCategory(list.items.filter((i) => !i.checked && !i.stored));
-  const done = groupByCategory(list.items.filter((i) => i.checked && !i.stored));
-  const stored = groupByCategory(list.items.filter((i) => i.stored));
-  const active = list.items.filter((i) => !i.stored);
+  const todo = groupByCategory(itemsWithCategoryId.filter((i) => !i.checked && !i.stored));
+  const done = groupByCategory(itemsWithCategoryId.filter((i) => i.checked && !i.stored));
+  const stored = groupByCategory(itemsWithCategoryId.filter((i) => i.stored));
+  const active = itemsWithCategoryId.filter((i) => !i.stored);
   const total = active.length;
   const completed = active.filter((i) => i.checked).length;
   const percent = total ? Math.round((completed / total) * 100) : 0;
 
-  const suggestions = list.items
+  const suggestions = itemsWithCategoryId
     .filter((i) => !i.stored)
     .map((i) => ({
       name: i.name,
@@ -552,6 +562,8 @@ export default async function ListPage({
                       item={item}
                       canEdit={canEdit}
                       isOwner={isOwner}
+                      categories={categories}
+                      updateItemMeta={updateItemMeta}
                     />
                   ))}
                 </ul>
@@ -583,6 +595,8 @@ export default async function ListPage({
                       item={item}
                       canEdit={canEdit}
                       isOwner={isOwner}
+                      categories={categories}
+                      updateItemMeta={updateItemMeta}
                     />
                   ))}
                 </ul>
@@ -619,6 +633,8 @@ export default async function ListPage({
                         canEdit={canEdit}
                         isOwner={isOwner}
                         stored
+                        categories={categories}
+                        updateItemMeta={updateItemMeta}
                       />
                     ))}
                   </ul>

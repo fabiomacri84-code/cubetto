@@ -1,13 +1,14 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { deletePack, deletePackItem } from "../../actions";
-import { setPackItemImage, clearPackItemImage } from "../../images-actions";
+import { deletePack, deletePackItem, updatePackMeta } from "../../actions";
+import { setPackItemImage, clearPackItemImage, setPackImage, clearPackImage, setPackEmoji, updatePackItemMeta } from "../../images-actions";
 import { requireUser } from "../../auth";
 import { prisma } from "../../db";
 import { Button } from "../../components/ui/button";
 import { IconImage } from "../../components/icon-image";
-import { ImageUploadButton } from "../../components/image-upload";
 import { PackAddSheet } from "../../components/pack-add-sheet";
+import { PackEditor } from "../../components/pack-editor";
+import { ItemEditor } from "../../components/item-editor";
 import { AppShell } from "../../components/app-shell";
 
 export const runtime = "nodejs";
@@ -93,6 +94,14 @@ export default async function PackPage({
                 {pack.items.length} elementi
               </p>
             </div>
+            <PackEditor
+              pack={pack}
+              setPackImage={setPackImage}
+              setPackEmoji={setPackEmoji}
+              clearPackImage={clearPackImage}
+              updatePackMeta={updatePackMeta}
+              className="relative h-12 w-12"
+            />
             <form action={deletePack}>
               <input type="hidden" name="id" value={pack.id} />
               <Button type="submit" variant="danger" size="sm">
@@ -117,57 +126,55 @@ export default async function PackPage({
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {pack.items.map((item) => (
-              <div key={item.id} className="tile relative p-3">
-                <span className="flex items-start justify-between">
-                  <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-surface-2 text-2xl">
-                    {item.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={item.imageUrl}
-                        alt=""
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <IconImage emoji={item.emoji} className="h-8 w-8" />
-                    )}
+              <ItemEditor
+                key={item.id}
+                item={item}
+                setItemImage={setPackItemImage}
+                setItemEmoji={setPackEmoji}
+                clearItemImage={clearPackItemImage}
+                updateItemMeta={updatePackItemMeta}
+                categories={categories}
+                className="relative h-full"
+              >
+                <div className="tile relative h-full p-3">
+                  <span className="flex items-start justify-between">
+                    <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-surface-2 text-2xl">
+                      {item.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.imageUrl}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <IconImage emoji={item.emoji} className="h-8 w-8" />
+                      )}
+                    </span>
                   </span>
-                </span>
-                <p className="mt-2 truncate text-sm font-semibold text-text">
-                  {item.name}
-                </p>
-                <p className="tnum mt-0.5 truncate text-xs text-text-3">
-                  {item.category
-                    ? `${item.category.emoji} ${item.category.name}`
-                    : "Senza categoria"}
-                  {item.quantity > 1 ? ` · ×${item.quantity}` : ""}
-                </p>
+                  <p className="mt-2 truncate text-sm font-semibold text-text">
+                    {item.name}
+                  </p>
+                  <p className="tnum mt-0.5 truncate text-xs text-text-3">
+                    {item.category
+                      ? `${item.category.emoji} ${item.category.name}`
+                      : "Senza categoria"}
+                    {item.quantity > 1 ? ` · ×${item.quantity}` : ""}
+                  </p>
 
-                <div className="absolute right-2 top-2 flex items-center gap-1">
-                  <ImageUploadButton action={setPackItemImage} itemId={item.id} />
-                  {item.imageUrl ? (
-                    <form action={clearPackItemImage}>
+                  <div className="absolute right-2 top-2 flex items-center gap-1">
+                    <form action={deletePackItem}>
                       <input type="hidden" name="id" value={item.id} />
                       <button
                         type="submit"
-                        aria-label="Rimuovi foto"
-                        className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-xs text-text-3 shadow-sm hover:bg-negative-soft hover:text-negative"
+                        aria-label={`Elimina ${item.name}`}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-sm text-text-3 shadow-sm hover:bg-negative-soft hover:text-negative"
                       >
-                        ✕
+                        🗑
                       </button>
                     </form>
-                  ) : null}
-                  <form action={deletePackItem}>
-                    <input type="hidden" name="id" value={item.id} />
-                    <button
-                      type="submit"
-                      aria-label={`Elimina ${item.name}`}
-                      className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-sm text-text-3 shadow-sm hover:bg-negative-soft hover:text-negative"
-                    >
-                      🗑
-                    </button>
-                  </form>
+                  </div>
                 </div>
-              </div>
+              </ItemEditor>
             ))}
           </div>
         )}

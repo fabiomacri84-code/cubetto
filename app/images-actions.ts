@@ -111,6 +111,83 @@ export async function clearItemImage(formData: FormData) {
   revalidatePath(`/lists/${item.listId}`);
 }
 
+export async function setItemEmoji(formData: FormData) {
+  const user = await requireUser();
+  const itemId = String(formData.get("id") ?? "").trim();
+  const emoji = String(formData.get("emoji") ?? "").trim();
+
+  if (!emoji) {
+    throw new Error("Emoji obbligatoria.");
+  }
+
+  const item = await prisma.item.findUnique({
+    where: { id: itemId },
+    include: { list: true },
+  });
+
+  if (!item) {
+    revalidatePath("/");
+    return;
+  }
+
+  if (item.list.ownerId !== user.id) {
+    throw new Error("Non puoi modificare questa lista.");
+  }
+
+  await prisma.item.update({
+    where: { id: itemId },
+    data: { emoji, imageUrl: null, imageSource: "emoji" },
+  });
+
+  await prisma.list.update({
+    where: { id: item.listId },
+    data: { updatedAt: new Date() },
+  });
+  revalidatePath(`/lists/${item.listId}`);
+}
+
+export async function updateItemMeta(formData: FormData) {
+  const user = await requireUser();
+  const itemId = String(formData.get("id") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+  const emoji = String(formData.get("emoji") ?? "").trim();
+  const categoryId = String(formData.get("categoryId") ?? "").trim() || null;
+
+  const item = await prisma.item.findUnique({
+    where: { id: itemId },
+    include: { list: true },
+  });
+
+  if (!item) {
+    revalidatePath("/");
+    return;
+  }
+
+  if (item.list.ownerId !== user.id) {
+    throw new Error("Non puoi modificare questa lista.");
+  }
+
+  const data: Record<string, unknown> = {};
+  if (name) data.name = name;
+  if (emoji) {
+    data.emoji = emoji;
+    data.imageUrl = null;
+    data.imageSource = "emoji";
+  }
+  if (categoryId !== null) data.categoryId = categoryId;
+
+  await prisma.item.update({
+    where: { id: itemId },
+    data,
+  });
+
+  await prisma.list.update({
+    where: { id: item.listId },
+    data: { updatedAt: new Date() },
+  });
+  revalidatePath(`/lists/${item.listId}`);
+}
+
 export async function setPackItemImage(formData: FormData) {
   const user = await requireUser();
   const itemId = String(formData.get("id") ?? "").trim();
@@ -155,6 +232,111 @@ export async function clearPackItemImage(formData: FormData) {
   await prisma.packItem.update({
     where: { id: itemId },
     data: { imageUrl: null, imageSource: "emoji" },
+  });
+
+  revalidatePath(`/packs/${item.packId}`);
+}
+
+export async function setPackImage(formData: FormData) {
+  const user = await requireUser();
+  const packId = String(formData.get("id") ?? "").trim();
+  const file = formData.get("file");
+
+  const pack = await prisma.pack.findUnique({
+    where: { id: packId },
+  });
+
+  if (!pack || pack.ownerId !== user.id) {
+    throw new Error("Non puoi modificare questo pack.");
+  }
+
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("Seleziona un'immagine.");
+  }
+
+  const storedName = await saveFile(file);
+
+  await prisma.pack.update({
+    where: { id: packId },
+    data: { imageUrl: `/api/files/${storedName}`, imageSource: "manual" },
+  });
+
+  revalidatePath(`/packs/${packId}`);
+}
+
+export async function clearPackImage(formData: FormData) {
+  const user = await requireUser();
+  const packId = String(formData.get("id") ?? "").trim();
+
+  const pack = await prisma.pack.findUnique({
+    where: { id: packId },
+  });
+
+  if (!pack || pack.ownerId !== user.id) {
+    throw new Error("Non puoi modificare questo pack.");
+  }
+
+  await prisma.pack.update({
+    where: { id: packId },
+    data: { imageUrl: null, imageSource: "emoji" },
+  });
+
+  revalidatePath(`/packs/${packId}`);
+}
+
+export async function setPackEmoji(formData: FormData) {
+  const user = await requireUser();
+  const packId = String(formData.get("id") ?? "").trim();
+  const emoji = String(formData.get("emoji") ?? "").trim();
+
+  if (!emoji) {
+    throw new Error("Emoji obbligatoria.");
+  }
+
+  const pack = await prisma.pack.findUnique({
+    where: { id: packId },
+  });
+
+  if (!pack || pack.ownerId !== user.id) {
+    throw new Error("Non puoi modificare questo pack.");
+  }
+
+  await prisma.pack.update({
+    where: { id: packId },
+    data: { emoji, imageUrl: null, imageSource: "emoji" },
+  });
+
+  revalidatePath(`/packs/${packId}`);
+}
+
+export async function updatePackItemMeta(formData: FormData) {
+  const user = await requireUser();
+  const itemId = String(formData.get("id") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+  const emoji = String(formData.get("emoji") ?? "").trim();
+  const categoryId = String(formData.get("categoryId") ?? "").trim() || null;
+
+  const item = await prisma.packItem.findUnique({
+    where: { id: itemId },
+    include: { pack: true },
+  });
+
+  if (!item || item.pack.ownerId !== user.id) {
+    throw new Error("Non puoi modificare questo pack.");
+  }
+
+  const data: Record<string, unknown> = {};
+  if (name) data.name = name;
+  if (emoji) {
+    data.emoji = emoji;
+    data.imageUrl = null;
+    data.imageSource = "emoji";
+  }
+  if (categoryId !== null) data.categoryId = categoryId;
+
+  await prisma.packItem.update({
+    where: { id: itemId },
+    data,
   });
 
   revalidatePath(`/packs/${item.packId}`);

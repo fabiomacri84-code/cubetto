@@ -13,6 +13,7 @@ function item(overrides: Partial<GroupableItem>): GroupableItem {
     imageUrl: null,
     sortOrder: 0,
     category: null,
+    categoryId: null,
     ...overrides,
   };
 }
