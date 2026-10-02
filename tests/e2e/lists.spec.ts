@@ -338,6 +338,7 @@ test("desktop: sidebar e intestazione mostrano la stessa immagine di lista e pac
   await page.getByLabel("Email o nome utente", { exact: true }).fill(`desktop-${crypto.randomUUID()}@cubetto.app`);
   await page.getByLabel("Password").fill("password123");
   await page.getByRole("button", { name: "Crea account" }).click();
+  await expect(page.getByText("Nuova lista")).toBeVisible();
   for (const kind of ["list", "pack"]) {
     await page.goto("/");
     if (kind === "pack") await page.locator("summary").filter({ hasText: "I tuoi pack" }).click();
