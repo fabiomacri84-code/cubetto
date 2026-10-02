@@ -267,7 +267,7 @@ export default async function ListPage({
 
   const userLists = await prisma.list.findMany({
     where: { members: { some: { userId: user.id } } },
-    select: { id: true, name: true, emoji: true, color: true },
+    select: { id: true, name: true, emoji: true, color: true, imageUrl: true },
     orderBy: { updatedAt: "desc" },
   });
 
@@ -279,6 +279,7 @@ export default async function ListPage({
         id: p.id,
         name: p.name,
         emoji: p.emoji,
+        imageUrl: p.imageUrl,
         color: p.color,
       }))}
       activeListId={list.id}

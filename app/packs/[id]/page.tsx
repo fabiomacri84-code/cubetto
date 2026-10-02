@@ -36,12 +36,12 @@ export default async function PackPage({
     }),
     prisma.list.findMany({
       where: { members: { some: { userId: user.id } } },
-      select: { id: true, name: true, emoji: true, color: true },
+      select: { id: true, name: true, emoji: true, color: true, imageUrl: true },
       orderBy: { updatedAt: "desc" },
     }),
     prisma.pack.findMany({
       where: { ownerId: user.id },
-      select: { id: true, name: true, emoji: true, color: true },
+      select: { id: true, name: true, emoji: true, color: true, imageUrl: true },
       orderBy: { updatedAt: "desc" },
     }),
   ]);

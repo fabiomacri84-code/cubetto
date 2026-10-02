@@ -41,12 +41,14 @@ export default async function Home() {
         id: l.id,
         name: l.name,
         emoji: l.emoji,
+        imageUrl: l.imageUrl,
         color: l.color,
       }))}
       packs={packs.map((p) => ({
         id: p.id,
         name: p.name,
         emoji: p.emoji,
+        imageUrl: p.imageUrl,
         color: p.color,
       }))}
     >

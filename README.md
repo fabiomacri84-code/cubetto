@@ -1,8 +1,8 @@
 # Cubetto
 
-![Versione](https://img.shields.io/badge/versione-0.3.0-blue)
+![Versione](https://img.shields.io/badge/versione-0.3.1-blue)
 
-> Versione 0.3.0: icone automatiche, icone locali e suggerimenti online da Iconify e rilascio versionato. Vedi [procedura di rilascio](docs/RELEASE.md) e [storico di importazione](docs/IMPORT.md).
+> Versione 0.3.1: icone automatiche, icone locali e suggerimenti online da Iconify e rilascio versionato. Vedi [procedura di rilascio](docs/RELEASE.md) e [storico di importazione](docs/IMPORT.md).
 
 
 > La lista della spesa (e non solo) che si condivide, si svuota e si aggiorna in tempo reale. Zero budget, zero fronzoli: solo quello che serve per non dimenticare nulla.
