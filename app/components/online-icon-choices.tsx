@@ -10,6 +10,7 @@ export function OnlineIconOptions({ options, onSelect }: { options: IconSuggesti
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={icon.imageUrl} alt="" width={48} height={48} referrerPolicy="no-referrer" className="h-12 w-12 object-contain" />
       </button>
+      {icon.suggestionNote ? <p className="mt-1 text-xs text-text-3">{icon.suggestionNote}</p> : null}
       {icon.sourceUrl ? <a href={icon.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-1 block text-xs text-text-3 underline">{icon.attribution ?? "Fonte dell’icona"}</a> : null}
     </div>)}
   </div> : null;
