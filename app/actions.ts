@@ -90,6 +90,9 @@ export async function updateListMeta(formData: FormData) {
     data: {
       name: readText(formData, "name") || list.name,
       emoji: readText(formData, "emoji") || list.emoji,
+      ...(readText(formData, "emoji") && readText(formData, "emoji") !== list.emoji
+        ? { imageUrl: null, imageAttribution: null, imageSourceUrl: null, imageSource: "emoji" as const }
+        : {}),
       color: readText(formData, "color") || list.color,
     },
   });
