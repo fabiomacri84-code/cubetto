@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { deletePack, deletePackItem, updatePackMeta } from "../../actions";
+import { deletePack, updatePackMeta } from "../../actions";
 import { setPackItemImage, clearPackItemImage, setPackImage, clearPackImage, setPackEmoji,
   setPackItemEmoji, updatePackItemMeta } from "../../images-actions";
 import { requireUser } from "../../auth";
@@ -10,6 +10,7 @@ import { IconImage } from "../../components/icon-image";
 import { PhotoCredit } from "../../components/photo-credit";
 import { PackAddSheet } from "../../components/pack-add-sheet";
 import { PackEditor } from "../../components/pack-editor";
+import { DeleteItemButton } from "../../components/delete-item-button";
 import { ItemEditor } from "../../components/item-editor";
 import { AppShell } from "../../components/app-shell";
 
@@ -150,16 +151,7 @@ export default async function PackPage({
                   </p>
 
                   <div className="absolute right-2 top-2 flex items-center gap-1">
-                    <form action={deletePackItem}>
-                      <input type="hidden" name="id" value={item.id} />
-                      <button
-                        type="submit"
-                        aria-label={`Elimina ${item.name}`}
-                        className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-sm text-text-3 shadow-sm hover:bg-negative-soft hover:text-negative"
-                      >
-                        🗑
-                      </button>
-                    </form>
+                    <DeleteItemButton itemId={item.id} name={item.name} scope="pack" />
                   </div>
                 </div>
               </ItemEditor>

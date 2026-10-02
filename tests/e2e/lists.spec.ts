@@ -295,3 +295,38 @@ test("seleziona un’icona online per oggetti esistenti in lista e pack", async 
     await expect(page.locator('img[src="https://api.iconify.design/lucide/glasses.svg"]')).toBeVisible();
   }
 });
+
+test("cestino uniforme: lista senza conferma, pack con conferma", async ({page}) => {
+  await page.goto("/register");
+  await page.getByLabel("Nome",{exact:true}).fill("Cestino");
+  await page.getByLabel("Email o nome utente",{exact:true}).fill(`cestino-${crypto.randomUUID()}@cubetto.app`);
+  await page.getByLabel("Password").fill("password123");
+  await page.getByRole("button",{name:"Crea account"}).click();
+  await page.getByText("Nuova lista").click();
+  await page.getByPlaceholder("es. Spesa settimanale").fill("Spesa");
+  await page.getByRole("button",{name:"Crea lista"}).click();
+  await page.getByText("Aggiungi elemento").click();
+  await page.getByLabel("Nome",{exact:true}).fill("Latte");
+  await page.getByRole("button",{name:"Aggiungi",exact:true}).click();
+  let confirmations=0;
+  const reject=async(dialog:import("@playwright/test").Dialog)=>{confirmations++;await dialog.dismiss();};
+  page.on("dialog",reject);
+  await page.getByRole("button",{name:"Elimina Latte",exact:true}).click();
+  await expect(page.getByRole("button",{name:"Modifica Latte",exact:true})).toHaveCount(0);
+  expect(confirmations).toBe(0);
+  await page.goto("/");
+  await page.locator("summary").filter({hasText:"I tuoi pack"}).click();
+  await page.getByText("Nuovo pack").click();
+  await page.getByPlaceholder("es. Valigia estate").fill("Valigia");
+  await page.getByRole("button",{name:"Crea pack"}).click();
+  await page.getByText("Aggiungi elemento").click();
+  await page.getByLabel("Nome",{exact:true}).fill("Latte");
+  await page.getByRole("button",{name:"Aggiungi",exact:true}).click();
+  await page.getByRole("button",{name:"Elimina Latte",exact:true}).click();
+  expect(confirmations).toBe(1);
+  await expect(page.getByRole("button",{name:"Modifica Latte",exact:true})).toBeVisible();
+  page.off("dialog",reject);
+  page.once("dialog",dialog=>dialog.accept());
+  await page.getByRole("button",{name:"Elimina Latte",exact:true}).click();
+  await expect(page.getByRole("button",{name:"Modifica Latte",exact:true})).toHaveCount(0);
+});
