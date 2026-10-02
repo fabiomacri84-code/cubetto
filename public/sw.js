@@ -24,6 +24,20 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+self.addEventListener("message", (event) => {
+  if (event.data === "skipWaiting") {
+    self.skipWaiting();
+  }
+});
+
+setInterval(() => {
+  self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
+    clients.forEach((client) => {
+      client.postMessage({ type: "VERSION_CHECK", version: CACHE });
+    });
+  });
+}, 60000);
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
 
