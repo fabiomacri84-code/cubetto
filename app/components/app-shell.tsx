@@ -6,8 +6,8 @@ import { cn } from "./ui/cn";
 import { APP_VERSION } from "../version";
 
 
-type NavList = { id: string; name: string; emoji: string; color: string };
-type NavPack = { id: string; name: string; emoji: string; color: string };
+type NavList = { id: string; name: string; emoji: string; color: string; imageUrl: string | null };
+type NavPack = { id: string; name: string; emoji: string; color: string; imageUrl: string | null };
 
 export function AppShell({
   user,
@@ -69,7 +69,7 @@ export function AppShell({
                     style={{ backgroundColor: `${list.color}1c` }}
                     aria-hidden
                   >
-                    <IconImage emoji={list.emoji} className="h-6 w-6" />
+                    <IconImage emoji={list.emoji} imageUrl={list.imageUrl} className="h-6 w-6 rounded" />
                   </span>
                   <span className="min-w-0 truncate">{list.name}</span>
                 </Link>
@@ -98,7 +98,7 @@ export function AppShell({
                     style={{ backgroundColor: `${pack.color}1c` }}
                     aria-hidden
                   >
-                    <IconImage emoji={pack.emoji} className="h-6 w-6" />
+                    <IconImage emoji={pack.emoji} imageUrl={pack.imageUrl} className="h-6 w-6 rounded" />
                   </span>
                   <span className="min-w-0 truncate">{pack.name}</span>
                 </Link>

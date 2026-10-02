@@ -330,3 +330,36 @@ test("cestino uniforme: lista senza conferma, pack con conferma", async ({page})
   await page.getByRole("button",{name:"Elimina Latte",exact:true}).click();
   await expect(page.getByRole("button",{name:"Modifica Latte",exact:true})).toHaveCount(0);
 });
+
+test("desktop: sidebar e intestazione mostrano la stessa immagine di lista e pack", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/register");
+  await page.getByLabel("Nome", { exact: true }).fill("Icone desktop");
+  await page.getByLabel("Email o nome utente", { exact: true }).fill(`desktop-${crypto.randomUUID()}@cubetto.app`);
+  await page.getByLabel("Password").fill("password123");
+  await page.getByRole("button", { name: "Crea account" }).click();
+  for (const kind of ["list", "pack"]) {
+    await page.goto("/");
+    if (kind === "pack") await page.locator("summary").filter({ hasText: "I tuoi pack" }).click();
+    await page.getByText(kind === "list" ? "Nuova lista" : "Nuovo pack").click();
+    const name = kind === "list" ? "Verona desktop" : "Pack desktop";
+    await page.getByPlaceholder(kind === "list" ? "es. Spesa settimanale" : "es. Valigia estate").fill(name);
+    await page.getByRole("button", { name: kind === "list" ? "Crea lista" : "Crea pack" }).click();
+    await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
+    const pathname = new URL(page.url()).pathname;
+    const id = pathname.split("/")[2];
+    const database = new Client({ connectionString: e2eDatabaseUrl() });
+    try {
+      await database.connect();
+      const updated = await database.query(`UPDATE "${kind === "list" ? "List" : "Pack"}" SET "imageUrl" = $1 WHERE "id" = $2`, ["/pwa-icon-192.png", id]);
+      expect(updated.rowCount).toBe(1);
+    } finally { await database.end(); }
+    await page.reload();
+    const sidebarIcon = page.locator(`aside a[href="${pathname}"] img`);
+    const headerIcon = page.locator('header img[src="/pwa-icon-192.png"]');
+    await expect(sidebarIcon).toHaveAttribute("src", "/pwa-icon-192.png");
+    await expect(headerIcon).toBeVisible();
+    await page.goto("/");
+    await expect(sidebarIcon).toHaveAttribute("src", "/pwa-icon-192.png");
+  }
+});
