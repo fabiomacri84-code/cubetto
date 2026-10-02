@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
+import path from "node:path";
 
 test.use({ storageState: undefined });
 
 test("crea lista, aggiunge elementi e spunta (rosso → blu)", async ({ page }) => {
-  const email = `lista-${Date.now()}@cubetto.app`;
+  const email = `lista-${crypto.randomUUID()}@cubetto.app`;
 
   await page.goto("/register");
   await page.getByLabel("Nome", { exact: true }).fill("Lista Test");
@@ -38,7 +39,7 @@ test("crea lista, aggiunge elementi e spunta (rosso → blu)", async ({ page }) 
 });
 
 test("quantità e inserimento pack", async ({ page }) => {
-  const email = `pack-${Date.now()}@cubetto.app`;
+  const email = `pack-${crypto.randomUUID()}@cubetto.app`;
 
   await page.goto("/register");
   await page.getByLabel("Nome", { exact: true }).fill("Pack Test");
@@ -67,7 +68,7 @@ test("quantità e inserimento pack", async ({ page }) => {
 });
 
 test("svuota la lista nel cassetto e riprende gli item", async ({ page }) => {
-  const email = `svuota-${Date.now()}@cubetto.app`;
+  const email = `svuota-${crypto.randomUUID()}@cubetto.app`;
 
   await page.goto("/register");
   await page.getByLabel("Nome", { exact: true }).fill("Svuota Test");
@@ -97,17 +98,17 @@ test("svuota la lista nel cassetto e riprende gli item", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Fatto" })).not.toBeVisible();
   await expect(page.getByText("Niente da fare")).toBeVisible();
 
-  await page.getByText("Cassetto").click();
+  await page.locator("summary").filter({ hasText: "Cassetto" }).click();
   await expect(page.locator("li").filter({ hasText: "Mele" })).toBeVisible();
   await expect(page.locator("li").filter({ hasText: "Banane" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Riprendi" }).first().click();
+  await page.getByRole("button", { name: "Riprendi Mele", exact: true }).click();
   await expect(page.locator("li").filter({ hasText: "Mele" })).toBeVisible();
   await expect(page.getByText("Niente da fare")).not.toBeVisible();
 });
 
 test("cambia immagine di un item dal tile: icona e foto", async ({ page }) => {
-  const email = `img-${Date.now()}@cubetto.app`;
+  const email = `img-${crypto.randomUUID()}@cubetto.app`;
 
   await page.goto("/register");
   await page.getByLabel("Nome", { exact: true }).fill("Img Test");
@@ -135,7 +136,8 @@ test("cambia immagine di un item dal tile: icona e foto", async ({ page }) => {
   await expect(dialog.getByText(/Oppure scegli un'icona/)).toBeVisible();
 
   const iconBefore = await tile.locator("img").first().getAttribute("src");
-  await dialog.locator("button[type='button']").nth(2).click();
+  // Click an icon from the grid (second icon, first is default)
+  await dialog.locator("div[class*='grid'] button").nth(1).click();
   await expect(dialog).not.toBeVisible();
   await expect(tile.locator("img").first()).not.toHaveAttribute(
     "src",
@@ -144,22 +146,19 @@ test("cambia immagine di un item dal tile: icona e foto", async ({ page }) => {
 
   await editorButton.click();
   await expect(dialog).toBeVisible();
-  const storedEmoji = await dialog.locator('input[name="emoji"]').inputValue();
+  const storedEmoji = await dialog.locator('input[name="emoji"]').first().inputValue();
   expect(storedEmoji).not.toBe("📦");
   await page.getByRole("button", { name: "Chiudi" }).last().click();
   await expect(dialog).not.toBeVisible();
 
   await editorButton.click();
   await expect(dialog).toBeVisible();
-  await dialog.locator('input[type="file"]').setInputFiles({
-    name: "foto.png",
-    mimeType: "image/png",
-    buffer: Buffer.from("89504e470d0a1a0a", "hex"),
-  });
+  await dialog.locator('input[type="file"]').setInputFiles(path.resolve(__dirname, "../fixtures/pixel.png"));
   await expect(dialog).not.toBeVisible();
   await expect(tile.locator("img").first()).toHaveAttribute("src", /\/api\/files\//);
 
   await editorButton.click();
+  await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("button", { name: "🗑️ Rimuovi foto" })).toBeVisible();
   await dialog.getByRole("button", { name: "🗑️ Rimuovi foto" }).click();
   await expect(dialog).not.toBeVisible();
@@ -167,4 +166,44 @@ test("cambia immagine di un item dal tile: icona e foto", async ({ page }) => {
     "src",
     /\/api\/files\//,
   );
+});
+test("icone automatiche, scelta manuale e nessuna categoria nei moduli lista e pack", async ({ page }) => {
+  await page.goto("/register");
+  await page.getByLabel("Nome", { exact: true }).fill("Icone Test");
+  await page.getByLabel("Email o nome utente", { exact: true }).fill(`icone-${crypto.randomUUID()}@cubetto.app`);
+  await page.getByLabel("Password").fill("password123");
+  await page.getByRole("button", { name: "Crea account" }).click();
+  await page.getByText("Nuova lista").click();
+  await page.getByPlaceholder("es. Spesa settimanale").fill("Lista icone");
+  await page.getByRole("button", { name: "Crea lista" }).click();
+  await page.getByText("Aggiungi elemento").click();
+  const sheet = page.getByRole("dialog").filter({ has: page.getByLabel("Nome", { exact: true }) });
+  await expect(sheet.locator('[name="categoryId"]')).toHaveCount(0);
+  await expect(sheet.getByLabel("Categoria", { exact: true })).toHaveCount(0);
+  await sheet.getByLabel("Nome", { exact: true }).fill("Spazzolino");
+  await expect(sheet.locator('input[name="emoji"]')).toHaveValue("🪥");
+  await sheet.getByRole("button", { name: "Scegli icona", exact: true }).click();
+  await page.getByRole("dialog", { name: "Scegli icona", exact: true }).getByRole("button", { name: "Regalo", exact: true }).click();
+  await expect(sheet.locator('input[name="emoji"]')).toHaveValue("🎁");
+  await sheet.getByLabel("Nome", { exact: true }).fill("Latte");
+  // A recognized new name must not replace a deliberately selected icon.
+  await page.waitForTimeout(700);
+  await expect(sheet.locator('input[name="emoji"]')).toHaveValue("🎁");
+  await sheet.getByRole("button", { name: "Aggiungi", exact: true }).click();
+  await page.getByRole("button", { name: "Modifica Latte", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Modifica Latte" }).locator('input[name="emoji"]').first()).toHaveValue("🎁");
+  await page.getByRole("dialog", { name: "Modifica Latte" }).getByRole("button", { name: "Chiudi", exact: true }).last().click();
+
+  await page.goto("/");
+  await page.locator("summary").filter({ hasText: "I tuoi pack" }).click();
+  await page.getByText("Nuovo pack").click();
+  await page.getByPlaceholder("es. Valigia estate").fill("Pack icone");
+  await page.getByRole("button", { name: "Crea pack" }).click();
+  await page.getByText("Aggiungi elemento").click();
+  await expect(sheet.locator('[name="categoryId"]')).toHaveCount(0);
+  await sheet.getByLabel("Nome", { exact: true }).fill("Latte");
+  await expect(sheet.locator('input[name="emoji"]')).toHaveValue("🥛");
+  await sheet.getByRole("button", { name: "Aggiungi", exact: true }).click();
+  await page.getByRole("button", { name: "Modifica Latte", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Modifica Latte" }).locator('input[name="emoji"]').first()).toHaveValue("🥛");
 });

@@ -3,9 +3,8 @@ import type { ReactNode } from "react";
 import { logout } from "../auth-actions";
 import { IconImage } from "./icon-image";
 import { cn } from "./ui/cn";
-import packageJson from "../../package.json";
+import { APP_VERSION } from "../version";
 
-const APP_VERSION = packageJson.version;
 
 type NavList = { id: string; name: string; emoji: string; color: string };
 type NavPack = { id: string; name: string; emoji: string; color: string };

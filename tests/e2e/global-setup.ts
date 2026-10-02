@@ -1,13 +1,9 @@
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import path from "node:path";
+import { e2eDatabaseUrl } from "./database";
 
-process.env.PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION = "Sì, resetta il DB";
-
-export default function globalSetup() {
-  const root = path.resolve(__dirname, "../..");
-  execSync("npx prisma migrate reset --force", {
-    cwd: root,
-    stdio: "inherit",
-  });
-  execSync("npm run seed", { cwd: root, stdio: "inherit" });
-}
+// Executed before the web server: no reset and no implicit use of the developer .env.
+const root = path.resolve(__dirname, "../..");
+const env = { ...process.env, DATABASE_URL: e2eDatabaseUrl() };
+execFileSync("npx", ["prisma", "migrate", "deploy"], { cwd: root, stdio: "inherit", env });
+execFileSync("npm", ["run", "seed"], { cwd: root, stdio: "inherit", env });

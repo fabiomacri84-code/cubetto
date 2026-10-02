@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { deletePack, deletePackItem, updatePackMeta } from "../../actions";
-import { setPackItemImage, clearPackItemImage, setPackImage, clearPackImage, setPackEmoji, updatePackItemMeta } from "../../images-actions";
+import { setPackItemImage, clearPackItemImage, setPackImage, clearPackImage, setPackEmoji,
+  setPackItemEmoji, updatePackItemMeta } from "../../images-actions";
 import { requireUser } from "../../auth";
 import { prisma } from "../../db";
 import { Button } from "../../components/ui/button";
 import { IconImage } from "../../components/icon-image";
+import { PhotoCredit } from "../../components/photo-credit";
 import { PackAddSheet } from "../../components/pack-add-sheet";
 import { PackEditor } from "../../components/pack-editor";
 import { ItemEditor } from "../../components/item-editor";
@@ -22,17 +24,15 @@ export default async function PackPage({
   const user = await requireUser();
   const { id } = await params;
 
-  const [pack, categories, lists, packs] = await Promise.all([
+  const [pack, lists, packs] = await Promise.all([
     prisma.pack.findUnique({
       where: { id },
       include: {
         items: {
-          include: { category: { select: { id: true, name: true, emoji: true } } },
           orderBy: { sortOrder: "asc" },
         },
       },
     }),
-    prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.list.findMany({
       where: { members: { some: { userId: user.id } } },
       select: { id: true, name: true, emoji: true, color: true },
@@ -54,7 +54,6 @@ export default async function PackPage({
       name: item.name,
       emoji: item.emoji,
       quantity: item.quantity,
-      categoryId: item.categoryId,
     }))
     .filter(
       (item, index, arr) =>
@@ -84,12 +83,13 @@ export default async function PackPage({
               style={{ backgroundColor: `${pack.color}1c` }}
               aria-hidden
             >
-              <IconImage emoji={pack.emoji} className="h-9 w-9" />
+              <IconImage emoji={pack.emoji} imageUrl={pack.imageUrl} className="h-9 w-9 rounded-xl" />
             </span>
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-lg font-extrabold tracking-tight text-text">
                 {pack.name}
               </h1>
+              <PhotoCredit attribution={pack.imageAttribution} sourceUrl={pack.imageSourceUrl} />
               <p className="tnum text-xs text-text-3">
                 {pack.items.length} elementi
               </p>
@@ -130,35 +130,23 @@ export default async function PackPage({
                 key={item.id}
                 item={item}
                 setItemImage={setPackItemImage}
-                setItemEmoji={setPackEmoji}
+                setItemEmoji={setPackItemEmoji}
                 clearItemImage={clearPackItemImage}
                 updateItemMeta={updatePackItemMeta}
-                categories={categories}
                 className="relative h-full"
               >
                 <div className="tile relative h-full p-3">
                   <span className="flex items-start justify-between">
                     <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-surface-2 text-2xl">
-                      {item.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={item.imageUrl}
-                          alt=""
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <IconImage emoji={item.emoji} className="h-8 w-8" />
-                      )}
+                      <IconImage emoji={item.emoji} imageUrl={item.imageUrl} className="h-8 w-8 rounded-lg" />
                     </span>
                   </span>
                   <p className="mt-2 truncate text-sm font-semibold text-text">
                     {item.name}
                   </p>
+                  <PhotoCredit attribution={item.imageAttribution} sourceUrl={item.imageSourceUrl} />
                   <p className="tnum mt-0.5 truncate text-xs text-text-3">
-                    {item.category
-                      ? `${item.category.emoji} ${item.category.name}`
-                      : "Senza categoria"}
-                    {item.quantity > 1 ? ` · ×${item.quantity}` : ""}
+                    {item.quantity > 1 ? ` ×${item.quantity}` : ""}
                   </p>
 
                   <div className="absolute right-2 top-2 flex items-center gap-1">
@@ -183,7 +171,6 @@ export default async function PackPage({
       <div className="fixed bottom-5 right-4 z-40 lg:bottom-8 lg:right-8">
         <PackAddSheet
           packId={pack.id}
-          categories={categories}
           suggestions={suggestions}
         />
       </div>

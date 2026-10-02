@@ -1,0 +1,52 @@
+name: Verifiche
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: cubetto
+          POSTGRES_PASSWORD: cubetto
+          POSTGRES_DB: cubetto_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cubetto -d cubetto_ci"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      CI: true
+      DATABASE_URL: postgresql://cubetto:cubetto@127.0.0.1:5432/cubetto_ci
+      E2E_DATABASE_URL: postgresql://cubetto:cubetto@127.0.0.1:5432/cubetto_ci
+      E2E_ALLOW_DISPOSABLE_DATABASE: "1"
+      AUTH_SECURE_COOKIES: "false"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run prisma:generate
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { Field } from "./ui/field";
 import { Input } from "./ui/input";
-import { IconPicker } from "./icon-picker";
+import { IconSuggestionField, useIconSuggestion } from "./icon-suggestion";
 import { cn } from "./ui/cn";
 
 type ServerAction = (formData: FormData) => Promise<void>;
@@ -28,9 +28,13 @@ export function CreateSheet({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const iconSuggestion = useIconSuggestion(iconInitial);
   const nameRef = useRef<HTMLInputElement>(null);
 
+  function closeSheet() { iconSuggestion.cancel(); setOpen(false); }
+
   function openSheet() {
+    iconSuggestion.reset();
     setOpen(true);
     requestAnimationFrame(() => nameRef.current?.focus());
   }
@@ -71,7 +75,7 @@ export function CreateSheet({
           <button
             type="button"
             aria-label="Chiudi"
-            onClick={() => setOpen(false)}
+            onClick={closeSheet}
             className="sheet-backdrop absolute inset-0 h-full w-full cursor-default"
           />
           <div className="sheet absolute inset-x-0 bottom-0 flex flex-col overflow-hidden px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2 lg:inset-x-auto lg:bottom-6 lg:left-1/2 lg:w-full lg:max-w-lg lg:-translate-x-1/2 lg:rounded-[var(--radius-3xl)]">
@@ -81,7 +85,7 @@ export function CreateSheet({
               <h2 className="text-xl font-bold text-text">{title}</h2>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={closeSheet}
                 aria-label="Chiudi"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-subtle text-text-2"
               >
@@ -98,13 +102,11 @@ export function CreateSheet({
                   required
                   autoComplete="off"
                   placeholder={placeholder}
+                  onChange={(event) => iconSuggestion.change(event.target.value)}
                 />
               </Field>
 
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold text-text-2">Icona</span>
-                <IconPicker name="emoji" initial={iconInitial} />
-              </div>
+              <IconSuggestionField icon={iconSuggestion.icon} onSelect={iconSuggestion.select} />
 
               <button
                 type="submit"

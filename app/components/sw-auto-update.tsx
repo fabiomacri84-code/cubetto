@@ -1,45 +1,61 @@
 "use client";
 
 import { useEffect } from "react";
+import { APP_VERSION } from "../version";
 
 export function SWAutoUpdate() {
   useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
+    if (process.env.NODE_ENV !== "production") return;
+    let disposed = false;
+    let checking = false;
+    let reloading = false;
+    const controller = new AbortController();
 
-    let refreshing = false;
-
-    navigator.serviceWorker.addEventListener("message", (event) => {
-      if (event.data?.type === "VERSION_CHECK") {
-        const swVersion = event.data.version;
-        const currentVersion = document.querySelector(".sr-only")?.textContent?.replace("Cubetto v", "") ?? "";
-
-        if (swVersion && currentVersion && swVersion !== currentVersion && !refreshing) {
-          refreshing = true;
-          navigator.serviceWorker.controller?.postMessage("skipWaiting");
-          setTimeout(() => window.location.reload(), 500);
+    async function checkVersion() {
+      if (checking || reloading || document.visibilityState !== "visible") return;
+      checking = true;
+      try {
+        const response = await fetch("/api/version", {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+        const data: { version?: string } = await response.json();
+        if (disposed || !data.version || data.version === APP_VERSION) return;
+        // Wait while the user is editing: never discard an unsaved form.
+        if (document.querySelector('[role="dialog"], dialog[open]')) return;
+        const focused = document.activeElement;
+        if (focused instanceof HTMLElement &&
+          (focused.matches("input, textarea, select") || focused.isContentEditable)) return;
+        // At most one reload per target version, even if a proxy serves old HTML.
+        const key = `cubetto:updated:${data.version}`;
+        try {
+          if (sessionStorage.getItem(key)) return;
+          sessionStorage.setItem(key, "1");
+        } catch {
+          // Without persistent session state, avoid risking a reload loop.
+          return;
         }
+        reloading = true;
+        window.location.reload();
+      } catch {
+        // Offline and transient failures are retried at the next check.
+      } finally {
+        checking = false;
       }
-    });
+    }
 
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (!refreshing) {
-        refreshing = true;
-        setTimeout(() => window.location.reload(), 500);
-      }
-    });
-
-    navigator.serviceWorker.ready.then((reg) => {
-      reg.addEventListener("updatefound", () => {
-        const newWorker = reg.installing;
-        if (newWorker) {
-          newWorker.addEventListener("statechange", () => {
-            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-              newWorker.postMessage("skipWaiting");
-            }
-          });
-        }
-      });
-    });
+    const timer = window.setInterval(checkVersion, 60_000);
+    document.addEventListener("visibilitychange", checkVersion);
+    window.addEventListener("focus", checkVersion);
+    void checkVersion();
+    return () => {
+      disposed = true;
+      controller.abort();
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", checkVersion);
+      window.removeEventListener("focus", checkVersion);
+    };
   }, []);
 
   return null;

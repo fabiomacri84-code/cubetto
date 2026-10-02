@@ -6,8 +6,10 @@ export type GroupableItem = {
   checked: boolean;
   stored: boolean;
   imageUrl: string | null;
+  imageAttribution?: string | null;
+  imageSourceUrl?: string | null;
   sortOrder: number;
-  category: { id: string; name: string; emoji: string } | null;
+  category?: { id: string; name: string; emoji: string } | null;
   categoryId: string | null;
 };
 

@@ -3,15 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Field } from "./ui/field";
 import { Input } from "./ui/input";
-import { IconPicker } from "./icon-picker";
-import { cn } from "./ui/cn";
+import { IconSuggestionField, useIconSuggestion } from "./icon-suggestion";
+import { IconImage } from "./icon-image";
 
-type Category = { id: string; name: string; emoji: string };
 type Suggestion = {
   name: string;
   emoji: string;
   quantity?: number;
-  categoryId?: string | null;
 };
 type ActionResult = { ok: boolean; error?: string };
 
@@ -25,7 +23,6 @@ export function AddSheet({
   iconInitial = "📦",
   hidden,
   action,
-  categories,
   suggestions,
 }: {
   fabLabel?: string;
@@ -35,7 +32,6 @@ export function AddSheet({
   iconInitial?: string;
   hidden: { name: string; value: string };
   action: AddSheetAction;
-  categories: Category[];
   suggestions: Suggestion[];
 }) {
   const [open, setOpen] = useState(false);
@@ -43,6 +39,7 @@ export function AddSheet({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [query, setQuery] = useState("");
+  const iconSuggestion = useIconSuggestion(iconInitial);
   const nameRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -61,8 +58,14 @@ export function AddSheet({
       .slice(0, 8);
   }, [query, suggestions]);
 
+  const handleNameChange = (value: string) => {
+    setQuery(value);
+    iconSuggestion.change(value);
+  };
+
   function openSheet() {
     setQuery("");
+    iconSuggestion.reset();
     setError(null);
     setOpen(true);
     requestAnimationFrame(() => nameRef.current?.focus());
@@ -72,6 +75,7 @@ export function AddSheet({
     setOpen(false);
     setError(null);
     setPending(false);
+    iconSuggestion.cancel();
   }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -162,7 +166,7 @@ export function AddSheet({
                   autoComplete="off"
                   placeholder={placeholder}
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => handleNameChange(e.target.value)}
                 />
               </Field>
 
@@ -172,49 +176,31 @@ export function AddSheet({
                     <button
                       key={`${suggestion.name}-${suggestion.emoji}`}
                       type="button"
-                      onClick={() => setQuery(suggestion.name)}
+                      onClick={() => {
+                        setQuery(suggestion.name);
+                        iconSuggestion.select(suggestion.emoji);
+                      }}
                       className="chip flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-text-2 hover:bg-subtle"
                     >
-                      <span aria-hidden>{suggestion.emoji}</span>
+                      <IconImage emoji={suggestion.emoji} className="h-5 w-5" />
                       <span className="max-w-40 truncate">{suggestion.name}</span>
                     </button>
                   ))}
                 </div>
               ) : null}
 
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Quantità">
-                  <Input
-                    name="quantity"
-                    type="number"
-                    min={1}
-                    max={999}
-                    defaultValue={1}
-                    inputMode="numeric"
-                  />
-                </Field>
-                <Field label="Categoria">
-                  <select
-                    name="categoryId"
-                    defaultValue=""
-                    className={cn(
-                      "min-h-12 w-full rounded-xl border border-line-strong bg-surface px-3 text-base text-text outline-none focus:border-accent",
-                    )}
-                  >
-                    <option value="">Senza categoria</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.emoji} {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-              </div>
+              <Field label="Quantità">
+                <Input
+                  name="quantity"
+                  type="number"
+                  min={1}
+                  max={999}
+                  defaultValue={1}
+                  inputMode="numeric"
+                />
+              </Field>
 
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold text-text-2">Icona</span>
-                <IconPicker initial={iconInitial} />
-              </div>
+              <IconSuggestionField icon={iconSuggestion.icon} onSelect={iconSuggestion.select} />
 
               {error ? (
                 <p className="rounded-xl border border-negative/30 bg-negative-soft px-3 py-2 text-sm text-negative">
