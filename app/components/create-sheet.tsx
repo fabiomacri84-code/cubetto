@@ -106,11 +106,12 @@ export function CreateSheet({
                 />
               </Field>
 
-              <IconSuggestionField icon={iconSuggestion.icon} onSelect={iconSuggestion.select} />
+              <IconSuggestionField icon={iconSuggestion.icon} status={iconSuggestion.status} onSelect={iconSuggestion.select} onRetry={iconSuggestion.retry} onImageError={iconSuggestion.imageFailed} />
 
               <button
                 type="submit"
-                className="mt-1 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-strong"
+                disabled={iconSuggestion.status === "loading"}
+                className="mt-1 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-strong disabled:opacity-50"
               >
                 {cta}
               </button>

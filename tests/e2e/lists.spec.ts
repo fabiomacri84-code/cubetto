@@ -181,10 +181,14 @@ test("icone automatiche, scelta manuale e nessuna categoria nei moduli lista e p
   await expect(sheet.locator('[name="categoryId"]')).toHaveCount(0);
   await expect(sheet.getByLabel("Categoria", { exact: true })).toHaveCount(0);
   await sheet.getByLabel("Nome", { exact: true }).fill("Spazzolino");
+  await expect(sheet.getByRole("progressbar", { name: "Ricerca immagine" })).toBeVisible();
+  await expect(sheet.getByRole("button", { name: "Scegli icona", exact: true })).toBeEnabled();
   await expect(sheet.locator('input[name="emoji"]')).toHaveValue("🪥");
   await sheet.getByRole("button", { name: "Scegli icona", exact: true }).click();
   await page.getByRole("dialog", { name: "Scegli icona", exact: true }).getByRole("button", { name: "Regalo", exact: true }).click();
   await expect(sheet.locator('input[name="emoji"]')).toHaveValue("🎁");
+  await expect(sheet.getByRole("progressbar")).toHaveCount(0);
+  await expect(sheet.getByRole("status")).toHaveText("Icona scelta da te.");
   await sheet.getByLabel("Nome", { exact: true }).fill("Latte");
   // A recognized new name must not replace a deliberately selected icon.
   await page.waitForTimeout(700);
