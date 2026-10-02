@@ -1,5 +1,10 @@
 # Cubetto
 
+![Versione](https://img.shields.io/badge/versione-0.1.0-blue)
+
+> Importazione da OpenCode in corso di verifica: questo ramo contiene modifiche non ancora rilasciate. Leggere [stato e istruzioni di importazione](docs/IMPORT.md). La versione 0.1.0 è quella ereditata dal progetto.
+
+
 > La lista della spesa (e non solo) che si condivide, si svuota e si aggiorna in tempo reale. Zero budget, zero fronzoli: solo quello che serve per non dimenticare nulla.
 
 **Cubetto** è una PWA per gestire liste condivise con amici, famiglia o colleghi. Puoi creare una lista, riempirla con gli item che preferisci, assegnarli alle categorie, aggiungere foto e quantità, e condividere tutto con un semplice codice di invito.

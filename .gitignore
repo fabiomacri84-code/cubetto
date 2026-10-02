@@ -13,3 +13,8 @@ playwright-report
 .DS_Store
 
 tsconfig.tsbuildinfo
+
+# Private import archives and local data
+.local/
+backups/
+*.dump
