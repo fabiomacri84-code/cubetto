@@ -1,3 +1,4 @@
+import catalog from "../../public/icons.json";
 const OBJECT_KEYWORDS: Record<string, string> = {
   latte: "🥛", uova: "🥚", pane: "🍞", burro: "🧈", formaggio: "🧀",
   yogurt: "🍶", frutta: "🍎", verdura: "🥕", carne: "🥩", pesce: "🐟",
@@ -69,7 +70,15 @@ const keywords = Object.entries({ ...OBJECT_KEYWORDS, ...aliases })
 
 export function matchObjectIcon(name: string): string | null {
   const words = ` ${normalize(name)} `;
-  return keywords.find(([word]) => words.includes(` ${word} `))?.[1] ?? null;
+  const normalized = normalize(name);
+  const exact = catalog.find((icon) => normalize(icon.name) === normalized);
+  if (exact) return exact.emoji;
+  const named = catalog.filter((icon) => words.includes(` ${normalize(icon.name)} `)).sort((a,b) => b.name.length-a.name.length)[0];
+  if (named) return named.emoji;
+  const known = keywords.find(([word]) => words.includes(` ${word} `))?.[1];
+  if (known) return known;
+  const hints = catalog.flatMap((icon) => icon.keywords.map((word) => ({word:normalize(word),emoji:icon.emoji}))).sort((a,b)=>b.word.length-a.word.length);
+  return hints.find(({word}) => word && words.includes(` ${word} `))?.emoji ?? null;
 }
 
 /** Local inference never transmits names to third parties. */

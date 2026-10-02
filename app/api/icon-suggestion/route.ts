@@ -1,6 +1,6 @@
 import { getCurrentUser } from "../../auth";
 import { matchObjectIcon } from "../../lib/icon-inference";
-import { findImage } from "../../lib/online-images";
+import { findOnlineIcons } from "../../lib/online-icons";
 
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "no-store, max-age=0" };
@@ -14,10 +14,13 @@ export async function POST(request: Request) {
   if (typeof name !== "string" || !name.trim() || name.length > 80 || /[\x00-\x1f|#<>]/.test(name)) {
     return Response.json({ error: "Nome non valido." }, { status: 400, headers });
   }
-  const emoji = matchObjectIcon(name) ?? "📦";
+  const local = matchObjectIcon(name);
+  const onlineOnly = !!(body && typeof body === "object" && "onlineOnly" in body && body.onlineOnly === true);
+  if (local && !onlineOnly) return Response.json({ emoji: local }, { headers });
+  const emoji = local ?? "📦";
   try {
-    const image = await findImage(name);
-    return Response.json(image ? { ...image, emoji } : { emoji }, { headers });
+    const options = await findOnlineIcons(name);
+    return Response.json({ emoji, options }, { headers });
   } catch {
     return Response.json({ error: "Immagine non disponibile." }, { status: 503, headers });
   }

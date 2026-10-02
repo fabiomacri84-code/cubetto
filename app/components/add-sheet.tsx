@@ -200,7 +200,7 @@ export function AddSheet({
                 />
               </Field>
 
-              <IconSuggestionField icon={iconSuggestion.icon} status={iconSuggestion.status} onSelect={iconSuggestion.select} onRetry={iconSuggestion.retry} onImageError={iconSuggestion.imageFailed} />
+              <IconSuggestionField icon={iconSuggestion.icon} options={iconSuggestion.options} onChoose={iconSuggestion.choose} status={iconSuggestion.status} onSelect={iconSuggestion.select} onRetry={iconSuggestion.retry} onImageError={iconSuggestion.imageFailed} />
 
               {error ? (
                 <p className="rounded-xl border border-negative/30 bg-negative-soft px-3 py-2 text-sm text-negative">

@@ -6,6 +6,7 @@ import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "./auth";
 import { prisma } from "./db";
+import { resolveOnlineIcon } from "./lib/online-icons";
 
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
 const MAX_SIZE = 25 * 1024 * 1024;
@@ -19,6 +20,15 @@ const ALLOWED_EXTENSIONS = new Set([
   "heic",
   "heif",
 ]);
+
+
+async function selectedOnlineIcon(formData: FormData) {
+  const title = String(formData.get("photoTitle") ?? "");
+  if (!title) return null;
+  const icon = await resolveOnlineIcon(title);
+  if (!icon?.imageUrl) throw new Error("Icona online non disponibile. Scegli un’altra icona.");
+  return { imageUrl: icon.imageUrl, imageAttribution: icon.attribution ?? null, imageSourceUrl: icon.sourceUrl ?? null, imageSource: "manual" as const };
+}
 
 async function ensureUploadsDir() {
   await fs.mkdir(UPLOADS_DIR, { recursive: true });
@@ -134,9 +144,10 @@ export async function setItemEmoji(formData: FormData) {
     throw new Error("Non puoi modificare questa lista.");
   }
 
+  const online = await selectedOnlineIcon(formData);
   await prisma.item.update({
     where: { id: itemId },
-    data: { emoji, imageAttribution: null, imageSourceUrl: null, imageUrl: null, imageSource: "emoji" },
+    data: { emoji, imageAttribution: null, imageSourceUrl: null, imageUrl: null, imageSource: "emoji", ...online },
   });
 
   await prisma.list.update({
@@ -362,6 +373,7 @@ export async function setPackItemEmoji(formData: FormData) {
   if (!emoji) throw new Error("Emoji obbligatoria.");
   const item = await prisma.packItem.findUnique({ where: { id }, include: { pack: true } });
   if (!item || item.pack.ownerId !== user.id) throw new Error("Non puoi modificare questo pack.");
-  await prisma.packItem.update({ where: { id }, data: { emoji, imageUrl: null, imageAttribution: null, imageSourceUrl: null, imageSource: "emoji" } });
+  const online = await selectedOnlineIcon(formData);
+  await prisma.packItem.update({ where: { id }, data: { emoji, imageUrl: null, imageAttribution: null, imageSourceUrl: null, imageSource: "emoji", ...online } });
   revalidatePath(`/packs/${item.packId}`);
 }
