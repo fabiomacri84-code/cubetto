@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Field } from "./ui/field";
 import { Input } from "./ui/input";
 import { IconPicker } from "./icon-picker";
-import { cn } from "./ui/cn";
 
 type Suggestion = {
   name: string;

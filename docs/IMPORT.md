@@ -57,7 +57,7 @@ Il seed è facoltativo e va usato soltanto su un database vuoto di prova. Per ri
 - Installazione da lockfile e generazione Prisma: completate.
 - TypeScript: superato.
 - Test unitari: 5 su 5 superati.
-- Lint: nessun errore, due avvisi preesistenti nelle modifiche importate (`cn` e `classType` inutilizzati).
+- Lint: due avvisi iniziali risolti rimuovendo `cn` e `classType` inutilizzati; nessuna modifica alla logica. Normalizzati anche gli spazi finali nel nuovo file. Il primo commit di importazione e gli archivi conservano lo stato originale.
 - Build Next.js: superata.
 - E2E: non eseguiti sul Mac; la cronologia Linux registra una precedente esecuzione con 16 test superati e 4 falliti, seguita da correzioni e test parziali ancora falliti. Non considerarli superati dopo l’importazione.
 - Audit dipendenze al momento dell’importazione: 11 segnalazioni (10 alte, una critica). Nessun aggiornamento automatico o cambio di major è stato applicato. Esaminare Next.js e le dipendenze segnalate prima del prossimo rilascio. Il rapporto integrale è conservato privatamente.

@@ -59,12 +59,11 @@ async function geocodePlace(name: string): Promise<string | null> {
     if (!res.ok) return null;
     const data = await res.json();
     if (!data.length) return null;
-    
+
     const place = data[0];
     const category = place.category?.toLowerCase() ?? "";
     const type = place.type?.toLowerCase() ?? "";
-    const classType = place.class?.toLowerCase() ?? "";
-    
+
     if (category.includes("tourism") || type.includes("attraction")) return "🏛️";
     if (category.includes("historic")) return "🏛️";
     if (category.includes("natural")) return "🏞️";
@@ -85,7 +84,7 @@ async function geocodePlace(name: string): Promise<string | null> {
     if (category.includes("place") && type.includes("island")) return "🏝️";
     if (category.includes("water") || type.includes("beach")) return "🏖️";
     if (category.includes("mountain") || type.includes("peak")) return "⛰️";
-    
+
     return "📍";
   } catch {
     return null;
@@ -94,7 +93,7 @@ async function geocodePlace(name: string): Promise<string | null> {
 
 function matchKeywords(name: string): string | null {
   const normalized = name.toLowerCase().trim();
-  
+
   for (const [keyword, emoji] of Object.entries(OBJECT_KEYWORDS)) {
     if (normalized.includes(keyword)) {
       return emoji;
@@ -105,12 +104,12 @@ function matchKeywords(name: string): string | null {
 
 export async function inferIcon(name: string): Promise<string> {
   if (!name || !name.trim()) return "📦";
-  
+
   const keywordMatch = matchKeywords(name);
   if (keywordMatch) return keywordMatch;
-  
+
   const placeIcon = await geocodePlace(name);
   if (placeIcon) return placeIcon;
-  
+
   return "📦";
 }
