@@ -13,6 +13,7 @@
 
 - **Liste condivise** — inviti tramite codice, con ruoli *proprietario*, *editor* e *sola lettura*.
 - **Item ricchi** — nome, quantità, categoria, note e foto dal dispositivo.
+- **Eliminazione oggetti** — cestino uniforme: nelle liste elimina subito; nei pack chiede conferma.
 - **Pack** — raccolte riutilizzabili per spesa, valigia e altre attività, senza categorie nell’interfaccia.
 - **Icone automatiche** — suggerimenti dal nome dell’oggetto, con scelta manuale sempre disponibile.
 - **Icone online** — prima cerca tra le 223 icone locali; in alternativa propone fino a due icone da cataloghi liberi Iconify. Si possono scegliere anche negli editor degli oggetti già presenti nelle liste e nei pack. Nessuna ricerca di fotografie.
