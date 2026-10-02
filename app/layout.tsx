@@ -3,6 +3,7 @@ import "./globals.css";
 import packageJson from "../package.json";
 import { ServiceWorkerRegistration } from "./components/service-worker";
 import { FocusGuard } from "./components/focus-guard";
+import { SWAutoUpdate } from "./components/sw-auto-update";
 
 const APP_VERSION = packageJson.version;
 
@@ -53,6 +54,7 @@ export default function RootLayout({
         {children}
         <ServiceWorkerRegistration />
         <FocusGuard />
+        <SWAutoUpdate />
         <div className="sr-only">Cubetto v{APP_VERSION}</div>
       </body>
     </html>

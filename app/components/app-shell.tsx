@@ -3,6 +3,9 @@ import type { ReactNode } from "react";
 import { logout } from "../auth-actions";
 import { IconImage } from "./icon-image";
 import { cn } from "./ui/cn";
+import packageJson from "../../package.json";
+
+const APP_VERSION = packageJson.version;
 
 type NavList = { id: string; name: string; emoji: string; color: string };
 type NavPack = { id: string; name: string; emoji: string; color: string };
@@ -131,6 +134,9 @@ export function AppShell({
               </button>
             </form>
           </div>
+          <p className="mt-4 text-center text-[10px] text-text-3">
+            v{APP_VERSION}
+          </p>
         </div>
       </aside>
 
