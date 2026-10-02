@@ -2,18 +2,13 @@ import "server-only";
 import type { IconSuggestion } from "./icon-types";
 import catalog from "../../public/icons.json";
 import { matchObjectIcon } from "./icon-inference";
+import { relatedIconQueries } from "./icon-search-terms";
 
 // Only icon collections with explicit free licenses, never stock/photo searches.
 const sets: Record<string, { author: string; license: string }> = {
   "fluent-emoji-flat": { author: "Microsoft", license: "MIT" },
   "lucide": { author: "Lucide Contributors", license: "ISC" },
   "simple-icons": { author: "Simple Icons Collaborators", license: "CC0-1.0" },
-};
-// Some brand icons are available by identity but omitted from catalog search.
-// Resolve these exact names first, still checking the remote icon before suggesting it.
-const brandIcons: Record<string, string> = {
-  pepsi: "simple-icons:pepsi",
-  cocacola: "simple-icons:cocacola",
 };
 const translations: Record<string,string> = { occhiali: "glasses", "occhiali da sole": "sunglasses", infradito: "thong sandal", tagliaunghie: "nail clipper", cacciavite: "screwdriver", pinza: "pliers", borraccia: "water bottle", aspirapolvere: "vacuum", caricabatterie: "charger", chiave: "key", casco: "helmet", candela: "candle", scotch: "tape", detersivo: "detergent", spugna: "sponge", forbici: "scissors", irlanda: "ireland" };
 // Catalog searches use English names. Reuse local inference for aliases/plurals
@@ -42,27 +37,74 @@ function searchQuery(name:string):string {
 const cache = new Map<string,{until:number;value:IconSuggestion[]}>();
 const pending = new Map<string,Promise<IconSuggestion[]>>();
 const validated = new Map<string,{until:number;value:IconSuggestion}>();
+const freeLicenses = new Set(["MIT", "ISC", "Apache-2.0", "CC0-1.0", "CC-BY-3.0", "CC-BY-4.0"]);
+let collectionsUntil = 0;
+let collectionsRequest: Promise<void> | undefined;
 function identity(title: string) {
   const match = /^Iconify:([a-z0-9-]+):([a-z0-9-]+)$/.exec(title);
-  return match && sets[match[1]] ? { prefix:match[1],name:match[2] } : null;
+  return match ? { prefix:match[1],name:match[2] } : null;
 }
 async function api(url: URL, signal?: AbortSignal) {
-  const response = await fetch(url, { cache:"no-store", signal:signal ?? AbortSignal.timeout(5000) });
+  const response = await fetch(url, { cache:"no-store", signal:signal ? AbortSignal.any([signal, AbortSignal.timeout(4000)]) : AbortSignal.timeout(4000) });
   if(!response.ok) throw new Error("Catalogo icone non disponibile.");
   return response.json();
+}
+async function loadCollections(signal?: AbortSignal) {
+  if (collectionsUntil > Date.now()) return;
+  if (!collectionsRequest) {
+    collectionsRequest = (async () => {
+      try {
+        const data = await api(new URL("https://api.iconify.design/collections"), signal);
+        if (!data || typeof data !== "object" || Array.isArray(data)) return;
+        for (const [prefix, info] of Object.entries(data)) {
+          if (!/^[a-z0-9-]+$/.test(prefix) || !info || typeof info !== "object") continue;
+          const metadata = info as { author?: { name?: unknown }; license?: { spdx?: unknown } };
+          const author = metadata.author?.name;
+          const license = metadata.license?.spdx;
+          if (typeof author === "string" && author.trim() && typeof license === "string" && freeLicenses.has(license)) {
+            sets[prefix] = { author, license };
+          }
+        }
+        collectionsUntil = Date.now() + 3600000;
+      } catch {
+        // Keep the established free catalogs usable during a metadata outage.
+        collectionsUntil = Date.now() + 10000;
+      }
+    })().finally(() => { collectionsRequest = undefined; });
+  }
+  await collectionsRequest;
 }
 export async function resolveOnlineIcon(title:string, signal?:AbortSignal):Promise<IconSuggestion|null> {
   const id=identity(title); if(!id) return null;
   const previous=validated.get(title); if(previous && previous.until>Date.now()) return previous.value;
   try {
+    if (!sets[id.prefix]) await loadCollections(signal);
+    const metadata=sets[id.prefix];
+    if (!metadata) return null;
     const url=new URL(`https://api.iconify.design/${id.prefix}.json`);url.searchParams.set("icons",id.name);
     const data=await api(url,signal);
     if(!data.icons?.[id.name] || typeof data.icons[id.name].body!=="string") return null;
-    const metadata=sets[id.prefix];
     const value={emoji:"📦",photoTitle:title,imageUrl:`https://api.iconify.design/${id.prefix}/${id.name}.svg`,attribution:`${metadata.author} · ${metadata.license}`,sourceUrl:`https://icon-sets.iconify.design/${id.prefix}/${id.name}/`};
     if(validated.size>=256) validated.delete(validated.keys().next().value!);
     validated.set(title,{until:Date.now()+3600000,value});return value;
   } catch { return null; }
+}
+function relevantIdentity(id: string, query: string) {
+  const parsed = identity(`Iconify:${id}`);
+  if (!parsed) return false;
+  const words = ` ${normalizeName(parsed.name)} `;
+  return normalizeName(query).split(" ").every(word => words.includes(` ${word} `));
+}
+async function searchIcons(query: string, signal: AbortSignal): Promise<IconSuggestion[]> {
+  const url=new URL("https://api.iconify.design/search");
+  url.searchParams.set("query",query);url.searchParams.set("limit","64");
+  const data=await api(url,signal);
+  await loadCollections(signal);
+  const titles: string[] = Array.isArray(data.icons) ? [...new Set<string>(data.icons.filter((id:unknown):id is string=>typeof id==="string" && relevantIdentity(id,query)))].filter(id => !!sets[identity(`Iconify:${id}`)!.prefix]) : [];
+  titles.sort((a,b) => Number(identity(`Iconify:${b}`)!.name === query.replaceAll(" ","-")) - Number(identity(`Iconify:${a}`)!.name === query.replaceAll(" ","-")));
+  const result:IconSuggestion[]=[];
+  for(const id of titles.slice(0,8)) { const icon=await resolveOnlineIcon(`Iconify:${id}`,signal);if(icon) result.push(icon);if(result.length===2 || signal.aborted) break; }
+  return result;
 }
 export async function findOnlineIcons(name:string):Promise<IconSuggestion[]> {
   if(name.trim().length>80) return [];
@@ -71,23 +113,18 @@ export async function findOnlineIcons(name:string):Promise<IconSuggestion[]> {
   if(pending.has(key)) return pending.get(key)!;
   if(pending.size>=10) return [];
   const work=(async()=>{
-    const signal=AbortSignal.timeout(8000);
-    const brand = brandIcons[key.replace(/[\s-]+/g, "")];
-    if (brand) {
-      const icon = await resolveOnlineIcon(`Iconify:${brand}`, signal);
-      if (icon) {
-        if(cache.size>=256) cache.delete(cache.keys().next().value!);
-        cache.set(key,{until:Date.now()+3600000,value:[icon]});
-        return [icon];
+    const signal=AbortSignal.timeout(12000);
+    // Hidden logos may be absent from search; derive every brand identity uniformly.
+    const brand = await resolveOnlineIcon(`Iconify:simple-icons:${key.replaceAll(" ", "")}`, signal);
+    let result = brand ? [brand] : await searchIcons(searchQuery(key), signal);
+    if (!result.length && !signal.aborted) {
+      const related = await relatedIconQueries(key, signal);
+      for (const query of related) {
+        if (signal.aborted) break;
+        result = (await searchIcons(query, signal)).map(icon => ({ ...icon, suggestionNote: "Icona correlata al prodotto" }));
+        if (result.length) break;
       }
     }
-    const query=searchQuery(key);
-    const url=new URL("https://api.iconify.design/search");
-    url.searchParams.set("query",query);url.searchParams.set("prefixes",Object.keys(sets).join(","));url.searchParams.set("limit","8");
-    const data=await api(url,signal);
-    const titles: string[] = Array.isArray(data.icons) ? data.icons.filter((id:unknown):id is string=>typeof id==="string" && !!identity(`Iconify:${id}`)).slice(0,4) : [];
-    const result:IconSuggestion[]=[];
-    for(const id of titles) { const icon=await resolveOnlineIcon(`Iconify:${id}`,signal);if(icon) result.push(icon);if(result.length===2 || signal.aborted) break; }
     if(cache.size>=256) cache.delete(cache.keys().next().value!);
     cache.set(key,{until:Date.now()+(result.length?3600000:10000),value:result});return result;
   })().finally(()=>pending.delete(key));
