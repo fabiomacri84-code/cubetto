@@ -75,7 +75,10 @@ export function matchObjectIcon(name: string): string | null {
   if (exact) return exact.emoji;
   const named = catalog.filter((icon) => words.includes(` ${normalize(icon.name)} `)).sort((a,b) => b.name.length-a.name.length)[0];
   if (named) return named.emoji;
-  return keywords.find(([word]) => words.includes(` ${word} `))?.[1] ?? null;
+  const known = keywords.find(([word]) => words.includes(` ${word} `))?.[1];
+  if (known) return known;
+  const hints = catalog.flatMap((icon) => icon.keywords.map((word) => ({word:normalize(word),emoji:icon.emoji}))).sort((a,b)=>b.word.length-a.word.length);
+  return hints.find(({word}) => word && words.includes(` ${word} `))?.emoji ?? null;
 }
 
 /** Local inference never transmits names to third parties. */

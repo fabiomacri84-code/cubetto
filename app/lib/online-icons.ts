@@ -6,7 +6,7 @@ const sets: Record<string, { author: string; license: string }> = {
   "fluent-emoji-flat": { author: "Microsoft", license: "MIT" },
   "lucide": { author: "Lucide Contributors", license: "ISC" },
 };
-const translations: Record<string,string> = { occhiali: "glasses", "occhiali da sole": "sunglasses", infradito: "flip flops", tagliaunghie: "nail clipper", cacciavite: "screwdriver", pinza: "pliers", borraccia: "water bottle", aspirapolvere: "vacuum", caricabatterie: "charger", chiave: "key", casco: "helmet", candela: "candle", scotch: "tape", detersivo: "detergent", spugna: "sponge", forbici: "scissors", irlanda: "ireland" };
+const translations: Record<string,string> = { occhiali: "glasses", "occhiali da sole": "sunglasses", infradito: "thong sandal", tagliaunghie: "nail clipper", cacciavite: "screwdriver", pinza: "pliers", borraccia: "water bottle", aspirapolvere: "vacuum", caricabatterie: "charger", chiave: "key", casco: "helmet", candela: "candle", scotch: "tape", detersivo: "detergent", spugna: "sponge", forbici: "scissors", irlanda: "ireland" };
 const cache = new Map<string,{until:number;value:IconSuggestion[]}>();
 const pending = new Map<string,Promise<IconSuggestion[]>>();
 const validated = new Map<string,{until:number;value:IconSuggestion}>();
