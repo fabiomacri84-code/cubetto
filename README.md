@@ -1,6 +1,6 @@
 # Cubetto
 
-![Versione](https://img.shields.io/badge/versione-0.2.0-blue)
+![Versione](https://img.shields.io/badge/versione-0.2.1-blue)
 
 > Versione 0.2.0: icone automatiche, foto dei luoghi da Wikimedia e rilascio versionato. Vedi [procedura di rilascio](docs/RELEASE.md) e [storico di importazione](docs/IMPORT.md).
 

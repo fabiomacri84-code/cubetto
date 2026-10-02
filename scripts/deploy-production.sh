@@ -28,12 +28,17 @@ mkdir "$RELEASE"
 chmod 755 "$RELEASE"
 git -C "$SOURCE" archive "$COMMIT" | tar -x -C "$RELEASE"
 ln -s "$SOURCE/.env" "$RELEASE/.env"
-ln -s "$SOURCE/uploads" "$RELEASE/uploads"
+# Turbopack cannot trace a directory symlink outside its project root during
+# build. Keep a local empty placeholder, then attach live uploads at runtime.
+# mkdir/rmdir fail safely if tracked files or unexpected build output exist.
+mkdir "$RELEASE/uploads"
 cd "$RELEASE"
 [[ $(node -p 'require("./package.json").version') == "${TAG#v}" ]] || { echo 'Tag/version mismatch.' >&2; exit 1; }
 npm ci
 npm run prisma:generate
 CUBETTO_BUILD_SHA="$COMMIT" npm run build
+rmdir "$RELEASE/uploads"
+ln -s "$SOURCE/uploads" "$RELEASE/uploads"
 # Spawn pg_dump with libpq variables: DATABASE_URL and its password never appear
 # in process arguments, console output, or the archive of source code.
 BACKUP_FILE="$BACKUP/database.dump" node --input-type=module <<'JS'
