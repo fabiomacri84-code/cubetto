@@ -1,4 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { stubImageLookup } from "./image-lookup";
+
+test.beforeEach(async ({ page }) => { await stubImageLookup(page); });
 
 const email = `utente-${crypto.randomUUID()}@cubetto.app`;
 const password = "password123";

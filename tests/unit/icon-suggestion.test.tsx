@@ -2,7 +2,7 @@ import React, { act, useEffect } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const { suggest } = vi.hoisted(() => ({ suggest: vi.fn() }));
-vi.mock("../../app/icon-actions", () => ({ suggestIcon: suggest }));
+vi.mock("../../app/lib/request-icon-suggestion", () => ({ requestIconSuggestion: suggest }));
 vi.mock("../../app/components/icon-picker", () => ({ IconPicker: ({ onChange }: { onChange: (emoji: string) => void }) => <button type="button" onClick={() => onChange("🎁")}>Scegli icona</button> }));
 import { IconSuggestionField, useIconSuggestion } from "../../app/components/icon-suggestion";
 import type { IconSuggestion } from "../../app/lib/icon-types";
@@ -36,7 +36,7 @@ it("attempts images for objects, short names and brands with visible progress", 
     expect(container.querySelector('[role="progressbar"]')).not.toBeNull();
     expect(container.querySelector("button")?.disabled).toBe(false);
     await act(async () => vi.advanceTimersByTime(700));
-    expect(suggest).toHaveBeenLastCalledWith(name);
+    expect(suggest).toHaveBeenLastCalledWith(name, expect.any(AbortSignal));
     expect(controller.status).toBe("notfound");
     expect(container.querySelector('[role="progressbar"]')).toBeNull();
   }
@@ -50,7 +50,7 @@ it("ignores old online results after a new object name while trying its image", 
   expect(controller.icon).toEqual({ emoji: "🥛" });
   expect(controller.status).toBe("loading");
   await act(async () => vi.advanceTimersByTime(700));
-  expect(suggest).toHaveBeenLastCalledWith("Latte");
+  expect(suggest).toHaveBeenLastCalledWith("Latte", expect.any(AbortSignal));
 });
 it("preserves manual choice during a request and subsequent edits", async () => {
   const old = pending(); suggest.mockReturnValueOnce(old.promise);
@@ -132,4 +132,22 @@ it("ignores an old preview failure after choosing manually or changing the name"
   act(() => oldFailure(imageUrl));
   expect(controller.icon).toEqual({ emoji: "🥛" });
   expect(controller.status).toBe("loading");
+});
+
+it("aborts independent reads on a new name, manual choice and close", () => {
+  suggest.mockReturnValue(new Promise(() => {}));
+  act(() => controller.change("Irlanda"));
+  act(() => vi.advanceTimersByTime(700));
+  const first = suggest.mock.calls[0][1] as AbortSignal;
+  act(() => controller.change("Latte"));
+  expect(first.aborted).toBe(true);
+  act(() => vi.advanceTimersByTime(700));
+  const second = suggest.mock.calls[1][1] as AbortSignal;
+  act(() => controller.select("🎁"));
+  expect(second.aborted).toBe(true);
+  act(() => controller.retry());
+  act(() => vi.advanceTimersByTime(700));
+  const third = suggest.mock.calls[2][1] as AbortSignal;
+  act(() => controller.cancel());
+  expect(third.aborted).toBe(true);
 });

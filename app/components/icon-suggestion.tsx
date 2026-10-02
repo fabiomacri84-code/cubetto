@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { suggestIcon } from "../icon-actions";
+import { requestIconSuggestion } from "../lib/request-icon-suggestion";
 import { matchObjectIcon } from "../lib/icon-inference";
 import type { IconSuggestion } from "../lib/icon-types";
 import { IconPicker } from "./icon-picker";
@@ -13,18 +13,21 @@ export function useIconSuggestion(initial: string) {
   const latestIcon = useRef<IconSuggestion>({ emoji: initial });
   function updateIcon(next: IconSuggestion) { latestIcon.current = next; setIcon(next); }
   const generation = useRef(0);
+  const requestController = useRef<AbortController | null>(null);
   const manual = useRef(false);
   const latestName = useRef("");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deadline = useRef<ReturnType<typeof setTimeout> | null>(null);
   function invalidate() {
     generation.current++;
+    requestController.current?.abort();
     if (timer.current) clearTimeout(timer.current);
     if (deadline.current) clearTimeout(deadline.current);
   }
   function cancel() { invalidate(); setStatus("idle"); }
   useEffect(() => () => {
     generation.current++;
+    requestController.current?.abort();
     if (timer.current) clearTimeout(timer.current);
     if (deadline.current) clearTimeout(deadline.current);
   }, []);
@@ -48,7 +51,9 @@ export function useIconSuggestion(initial: string) {
       deadline.current = setTimeout(() => {
         if (generation.current === request) { invalidate(); setStatus("error"); }
       }, 15000);
-      suggestIcon(name.trim()).then((result) => {
+      const controller = new AbortController();
+      requestController.current = controller;
+      requestIconSuggestion(name.trim(), controller.signal).then((result) => {
         if (generation.current !== request || manual.current) return;
         if (deadline.current) clearTimeout(deadline.current);
         updateIcon(result.emoji === "📦" && !result.imageUrl ? { emoji: fallback } : result);

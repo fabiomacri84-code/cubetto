@@ -1,4 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { stubImageLookup } from "./image-lookup";
+
+test.beforeEach(async ({ page }) => { await stubImageLookup(page); });
 
 test("condivisione: invito, join e sola lettura", async ({ browser }) => {
   const ownerEmail = `owner-${crypto.randomUUID()}@cubetto.app`;
