@@ -78,8 +78,8 @@ export async function resolveOnlineIcon(title:string, signal?:AbortSignal):Promi
   const id=identity(title); if(!id) return null;
   const previous=validated.get(title); if(previous && previous.until>Date.now()) return previous.value;
   try {
-    if (!sets[id.prefix]) await loadCollections(signal);
-    const metadata=sets[id.prefix];
+    if (!Object.hasOwn(sets, id.prefix)) await loadCollections(signal);
+    const metadata=Object.hasOwn(sets, id.prefix) ? sets[id.prefix] : null;
     if (!metadata) return null;
     const url=new URL(`https://api.iconify.design/${id.prefix}.json`);url.searchParams.set("icons",id.name);
     const data=await api(url,signal);
@@ -100,7 +100,7 @@ async function searchIcons(query: string, signal: AbortSignal): Promise<IconSugg
   url.searchParams.set("query",query);url.searchParams.set("limit","64");
   const data=await api(url,signal);
   await loadCollections(signal);
-  const titles: string[] = Array.isArray(data.icons) ? [...new Set<string>(data.icons.filter((id:unknown):id is string=>typeof id==="string" && relevantIdentity(id,query)))].filter(id => !!sets[identity(`Iconify:${id}`)!.prefix]) : [];
+  const titles: string[] = Array.isArray(data.icons) ? [...new Set<string>(data.icons.filter((id:unknown):id is string=>typeof id==="string" && relevantIdentity(id,query)))].filter(id => Object.hasOwn(sets, identity(`Iconify:${id}`)!.prefix)) : [];
   titles.sort((a,b) => Number(identity(`Iconify:${b}`)!.name === query.replaceAll(" ","-")) - Number(identity(`Iconify:${a}`)!.name === query.replaceAll(" ","-")));
   const result:IconSuggestion[]=[];
   for(const id of titles.slice(0,8)) { const icon=await resolveOnlineIcon(`Iconify:${id}`,signal);if(icon) result.push(icon);if(result.length===2 || signal.aborted) break; }
