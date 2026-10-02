@@ -54,10 +54,10 @@ function Tile({
   const image = <IconImage emoji={item.emoji} imageUrl={item.imageUrl} className="h-8 w-8 rounded-lg" />;
 
   return (
-    <li className="relative">
+    <li className="relative flex flex-col">
       <PhotoCredit attribution={item.imageAttribution} sourceUrl={item.imageSourceUrl} />
       {stored ? (
-        <div className="tile tile-done h-full p-3">
+        <div className="tile tile-done flex-1 p-3">
           <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-surface-2 text-2xl opacity-70">
             {image}
           </span>
@@ -69,7 +69,7 @@ function Tile({
           ) : null}
         </div>
       ) : canEdit ? (
-        <div className={`tile relative h-full p-3 ${item.checked ? "tile-done" : ""}`}>
+        <div className={`tile relative flex-1 p-3 ${item.checked ? "tile-done" : ""}`}>
           <form action={toggleItem}>
             <input type="hidden" name="id" value={item.id} />
             <button
@@ -157,7 +157,7 @@ function Tile({
           </div>
         </div>
       ) : (
-        <div className={`tile h-full p-3 ${item.checked ? "tile-done" : ""}`}>
+        <div className={`tile flex-1 p-3 ${item.checked ? "tile-done" : ""}`}>
           <span className="flex items-start justify-between">
             <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-surface-2 text-2xl">
               {image}

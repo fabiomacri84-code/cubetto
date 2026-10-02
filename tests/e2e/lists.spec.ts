@@ -1,7 +1,38 @@
 import { expect, test } from "@playwright/test";
+import { Client } from "pg";
 import path from "node:path";
+import { stubImageLookup } from "./image-lookup";
+import { e2eDatabaseUrl } from "./database";
+
+test.beforeEach(async ({ page }) => { await stubImageLookup(page); });
 
 test.use({ storageState: undefined });
+
+test("ricerca immagine indisponibile: sceglie un’icona manuale e salva", async ({ page }) => {
+  await page.goto("/register");
+  await page.getByLabel("Nome", { exact: true }).fill("Immagine indisponibile");
+  await page.getByLabel("Email o nome utente", { exact: true }).fill(`immagine-${crypto.randomUUID()}@cubetto.app`);
+  await page.getByLabel("Password").fill("password123");
+  await page.getByRole("button", { name: "Crea account" }).click();
+
+  await page.route("**/api/icon-suggestion", async (route) => {
+    await route.fulfill({ status: 503, json: { error: "Image lookup unavailable" } });
+  });
+  await page.getByText("Nuova lista").click();
+  const sheet = page.getByRole("dialog").filter({ has: page.getByPlaceholder("es. Spesa settimanale") });
+  await sheet.getByPlaceholder("es. Spesa settimanale").fill("infradito");
+  await expect(sheet.getByRole("progressbar", { name: "Ricerca immagine" })).toBeVisible();
+  await expect(sheet.getByRole("status")).toHaveText("Immagine non disponibile. Puoi scegliere un’icona a mano.");
+  await expect(sheet.getByRole("progressbar")).toHaveCount(0);
+  await sheet.getByRole("button", { name: "Scegli icona", exact: true }).click();
+  await page.getByRole("dialog", { name: "Scegli icona", exact: true }).getByRole("button", { name: "Regalo", exact: true }).click();
+  await expect(sheet.locator('input[name="emoji"]')).toHaveValue("🎁");
+  await expect(sheet.getByRole("status")).toHaveText("Icona scelta da te.");
+  await sheet.getByRole("button", { name: "Crea lista" }).click();
+  await expect(page.getByRole("heading", { name: "infradito", exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "infradito", exact: true })).toBeVisible();
+});
 
 test("crea lista, aggiunge elementi e spunta (rosso → blu)", async ({ page }) => {
   const email = `lista-${crypto.randomUUID()}@cubetto.app`;
@@ -89,6 +120,26 @@ test("svuota la lista nel cassetto e riprende gli item", async ({ page }) => {
   await page.getByLabel("Nome", { exact: true }).fill("Banane");
   await page.getByRole("button", { name: "Aggiungi", exact: true }).click();
   await expect(page.getByRole("button", { name: "Fatto" }).filter({ hasText: "Banane" })).toBeVisible();
+
+  // Photo credits must fit within the tile without covering the drawer action.
+  // Modify only this test's freshly created item on the guarded disposable database.
+  const listPath = new URL(page.url()).pathname.split("/");
+  expect(listPath[1]).toBe("lists");
+  const listId = listPath[2];
+  expect(listId).toBeTruthy();
+  const database = new Client({ connectionString: e2eDatabaseUrl() });
+  try {
+    await database.connect();
+    const updated = await database.query(
+      'UPDATE "Item" SET "imageUrl" = $1, "imageAttribution" = $2, "imageSourceUrl" = $3 WHERE "listId" = $4 AND "name" = $5',
+      ["/pwa-icon-192.png", "Fotografo · CC0", "https://commons.wikimedia.org/wiki/File:Test.jpg", listId, "Mele"],
+    );
+    expect(updated.rowCount).toBe(1);
+  } finally {
+    await database.end();
+  }
+  await page.reload();
+  await expect(page.getByText("Foto: Fotografo · CC0 · Wikimedia Commons")).toBeVisible();
 
   await page.getByRole("button", { name: "Fatto" }).first().click();
   await expect(page.getByRole("heading", { name: "Fatto" })).toBeVisible();
@@ -181,10 +232,14 @@ test("icone automatiche, scelta manuale e nessuna categoria nei moduli lista e p
   await expect(sheet.locator('[name="categoryId"]')).toHaveCount(0);
   await expect(sheet.getByLabel("Categoria", { exact: true })).toHaveCount(0);
   await sheet.getByLabel("Nome", { exact: true }).fill("Spazzolino");
+  await expect(sheet.getByRole("progressbar", { name: "Ricerca immagine" })).toBeVisible();
+  await expect(sheet.getByRole("button", { name: "Scegli icona", exact: true })).toBeEnabled();
   await expect(sheet.locator('input[name="emoji"]')).toHaveValue("🪥");
   await sheet.getByRole("button", { name: "Scegli icona", exact: true }).click();
   await page.getByRole("dialog", { name: "Scegli icona", exact: true }).getByRole("button", { name: "Regalo", exact: true }).click();
   await expect(sheet.locator('input[name="emoji"]')).toHaveValue("🎁");
+  await expect(sheet.getByRole("progressbar")).toHaveCount(0);
+  await expect(sheet.getByRole("status")).toHaveText("Icona scelta da te.");
   await sheet.getByLabel("Nome", { exact: true }).fill("Latte");
   // A recognized new name must not replace a deliberately selected icon.
   await page.waitForTimeout(700);

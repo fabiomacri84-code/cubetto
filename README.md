@@ -1,8 +1,8 @@
 # Cubetto
 
-![Versione](https://img.shields.io/badge/versione-0.2.1-blue)
+![Versione](https://img.shields.io/badge/versione-0.2.2-blue)
 
-> Versione 0.2.0: icone automatiche, foto dei luoghi da Wikimedia e rilascio versionato. Vedi [procedura di rilascio](docs/RELEASE.md) e [storico di importazione](docs/IMPORT.md).
+> Versione 0.2.2: icone automatiche, immagini automatiche per luoghi, oggetti e nomi da Wikimedia e rilascio versionato. Vedi [procedura di rilascio](docs/RELEASE.md) e [storico di importazione](docs/IMPORT.md).
 
 
 > La lista della spesa (e non solo) che si condivide, si svuota e si aggiorna in tempo reale. Zero budget, zero fronzoli: solo quello che serve per non dimenticare nulla.
@@ -15,7 +15,7 @@
 - **Item ricchi** — nome, quantità, categoria, note e foto dal dispositivo.
 - **Pack** — raccolte riutilizzabili per spesa, valigia e altre attività, senza categorie nell’interfaccia.
 - **Icone automatiche** — suggerimenti dal nome dell’oggetto, con scelta manuale sempre disponibile.
-- **Foto dei luoghi** — suggerimenti da Wikimedia Commons per città come Verona, con autore e licenza visibili. La disponibilità dipende dal catalogo e dalla connessione.
+- **Immagini automatiche** — ricerca gratuita da Wikimedia per ogni nome, compresi luoghi, oggetti e marchi, con autore e licenza visibili. Una barra mostra la ricerca in corso; scelta manuale e nuovo tentativo restano disponibili. La disponibilità e la pertinenza dipendono dal catalogo e dalla connessione.
 - **Pallino presenza** — vedi chi è online sulla stessa lista e la pagina si aggiorna da sola quando gli altri modificano qualcosa. Niente più refresh manuale.
 - **Svuota & Cassetto** — svuota la lista dei fatti e da fare in un colpo: gli item finiscono nel *cassetto* e puoi riprenderli quando ti servono.
 - **Icone emoji autohostate** — 223 icone Twemoji servite localmente, senza dipendenze esterne, con un picker con ricerca.
@@ -32,7 +32,7 @@
 ## Sviluppo locale
 
 ```bash
-npm install
+npm ci
 cp .env.example .env          # punta al tuo PostgreSQL (es. via docker-compose)
 npx prisma migrate deploy
 npm run seed                  # crea utenti demo, categorie, liste e pack

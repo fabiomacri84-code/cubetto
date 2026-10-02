@@ -147,12 +147,14 @@ export function IconPicker({
   value: controlledValue,
   onChange,
   imageUrl,
+  onImageError,
 }: {
   name?: string;
   initial?: string;
   value?: string;
   onChange?: (emoji: string) => void;
   imageUrl?: string;
+  onImageError?: (imageUrl: string) => void;
 }) {
   const [internalValue, setValue] = useState(initial);
   const value = controlledValue ?? internalValue;
@@ -234,7 +236,7 @@ export function IconPicker({
       >
         {imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt="Foto suggerita" className="h-9 w-9 rounded object-cover" referrerPolicy="no-referrer" />
+          <img key={imageUrl} src={imageUrl} alt="Foto suggerita" className="h-9 w-9 rounded object-cover" referrerPolicy="no-referrer" onError={() => onImageError?.(imageUrl)} />
         ) : <IconImage emoji={value} className="h-6 w-6" />}
       </button>
       {open && pos

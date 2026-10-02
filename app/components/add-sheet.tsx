@@ -178,7 +178,7 @@ export function AddSheet({
                       type="button"
                       onClick={() => {
                         setQuery(suggestion.name);
-                        iconSuggestion.select(suggestion.emoji);
+                        iconSuggestion.change(suggestion.name);
                       }}
                       className="chip flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-text-2 hover:bg-subtle"
                     >
@@ -200,7 +200,7 @@ export function AddSheet({
                 />
               </Field>
 
-              <IconSuggestionField icon={iconSuggestion.icon} onSelect={iconSuggestion.select} />
+              <IconSuggestionField icon={iconSuggestion.icon} status={iconSuggestion.status} onSelect={iconSuggestion.select} onRetry={iconSuggestion.retry} onImageError={iconSuggestion.imageFailed} />
 
               {error ? (
                 <p className="rounded-xl border border-negative/30 bg-negative-soft px-3 py-2 text-sm text-negative">
@@ -210,7 +210,7 @@ export function AddSheet({
 
               <button
                 type="submit"
-                disabled={pending}
+                disabled={pending || iconSuggestion.status === "loading"}
                 className="mt-1 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-strong disabled:opacity-50"
               >
                 {pending ? "Aggiungo…" : cta}

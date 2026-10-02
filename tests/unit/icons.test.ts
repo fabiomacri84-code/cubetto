@@ -33,11 +33,12 @@ describe("Wikimedia photos", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => metadata("https://evil.example/test.jpg", "CC BY 4.0") }));
     expect(await resolveSelectedImage("File:UnitHost.jpg")).toBeNull();
   });
-  it("does not use ambiguous articles which are not places", async () => {
-    const fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ query: { pages: [{ terms: { description: ["film del 2010"] }, pageimage: "Movie.jpg" }] } }) });
+  it("accepts images for articles beyond places", async () => {
+    const fetch = vi.fn().mockImplementation(async (url: URL) => ({ ok: true, json: async () => url.hostname === "commons.wikimedia.org"
+      ? metadata("https://upload.wikimedia.org/movie.jpg", "CC BY 4.0")
+      : { query: { pages: [{ terms: { description: ["film del 2010"] }, pageimage: "Movie.jpg" }] } } }));
     vi.stubGlobal("fetch", fetch);
-    expect(await findPlaceImage("Un film sconosciuto")).toBeNull();
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(await findPlaceImage("Un film sconosciuto")).toMatchObject({ photoTitle: "File:Movie.jpg" });
   });
   it("fails gracefully when Wikimedia is unavailable", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));

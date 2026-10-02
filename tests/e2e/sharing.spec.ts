@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { stubImageLookup } from "./image-lookup";
 
 test("condivisione: invito, join e sola lettura", async ({ browser }) => {
   const ownerEmail = `owner-${crypto.randomUUID()}@cubetto.app`;
@@ -9,6 +10,8 @@ test("condivisione: invito, join e sola lettura", async ({ browser }) => {
   const guestContext = await browser.newContext();
   const owner = await ownerContext.newPage();
   const guest = await guestContext.newPage();
+  await stubImageLookup(owner);
+  await stubImageLookup(guest);
 
   try {
     await owner.goto("/register");
