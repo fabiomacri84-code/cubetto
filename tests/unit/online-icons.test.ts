@@ -32,6 +32,7 @@ it("rejects unknown licenses, malformed identities and nonexistent icons",async(
  const fetch=mockCatalog();
  const {resolveOnlineIcon}=await import("../../app/lib/online-icons");
  expect(await resolveOnlineIcon("Iconify:evil:a")).toBeNull();
+ expect(await resolveOnlineIcon("Iconify:constructor:a")).toBeNull();
  expect(await resolveOnlineIcon("Iconify:photo:person")).toBeNull();
  expect(await resolveOnlineIcon("Iconify:mdi:../secret")).toBeNull();
  expect(fetch.mock.calls.every(([url])=>url.pathname==="/collections")).toBe(true);
