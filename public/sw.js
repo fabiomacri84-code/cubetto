@@ -1,4 +1,4 @@
-const CACHE = "cubetto-v2";
+const CACHE = "cubetto-v3";
 const CORE_ASSETS = [
   "/",
   "/manifest.webmanifest",
