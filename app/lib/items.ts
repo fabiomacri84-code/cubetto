@@ -7,7 +7,7 @@ export type GroupableItem = {
   stored: boolean;
   imageUrl: string | null;
   sortOrder: number;
-  category: { id: string; name: string; emoji: string } | null;
+  category?: { id: string; name: string; emoji: string } | null;
   categoryId: string | null;
 };
 

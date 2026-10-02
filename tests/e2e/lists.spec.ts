@@ -135,7 +135,8 @@ test("cambia immagine di un item dal tile: icona e foto", async ({ page }) => {
   await expect(dialog.getByText(/Oppure scegli un'icona/)).toBeVisible();
 
   const iconBefore = await tile.locator("img").first().getAttribute("src");
-  await dialog.locator("button[type='button']").nth(2).click();
+  // Click an icon from the grid (second icon, first is default)
+  await dialog.locator("div[class*='grid'] button").nth(1).click();
   await expect(dialog).not.toBeVisible();
   await expect(tile.locator("img").first()).not.toHaveAttribute(
     "src",
@@ -144,6 +145,8 @@ test("cambia immagine di un item dal tile: icona e foto", async ({ page }) => {
 
   await editorButton.click();
   await expect(dialog).toBeVisible();
+  // Switch to Dettagli tab to check emoji
+  await dialog.getByRole("tab", { name: /Dettagli/ }).click();
   const storedEmoji = await dialog.locator('input[name="emoji"]').inputValue();
   expect(storedEmoji).not.toBe("📦");
   await page.getByRole("button", { name: "Chiudi" }).last().click();
@@ -160,6 +163,9 @@ test("cambia immagine di un item dal tile: icona e foto", async ({ page }) => {
   await expect(tile.locator("img").first()).toHaveAttribute("src", /\/api\/files\//);
 
   await editorButton.click();
+  await expect(dialog).toBeVisible();
+  // Switch to Immagine tab to remove photo
+  await dialog.getByRole("tab", { name: "🖼️ Immagine" }).click();
   await expect(dialog.getByRole("button", { name: "🗑️ Rimuovi foto" })).toBeVisible();
   await dialog.getByRole("button", { name: "🗑️ Rimuovi foto" }).click();
   await expect(dialog).not.toBeVisible();

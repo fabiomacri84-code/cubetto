@@ -22,17 +22,15 @@ export default async function PackPage({
   const user = await requireUser();
   const { id } = await params;
 
-  const [pack, categories, lists, packs] = await Promise.all([
+  const [pack, lists, packs] = await Promise.all([
     prisma.pack.findUnique({
       where: { id },
       include: {
         items: {
-          include: { category: { select: { id: true, name: true, emoji: true } } },
           orderBy: { sortOrder: "asc" },
         },
       },
     }),
-    prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.list.findMany({
       where: { members: { some: { userId: user.id } } },
       select: { id: true, name: true, emoji: true, color: true },
@@ -54,7 +52,6 @@ export default async function PackPage({
       name: item.name,
       emoji: item.emoji,
       quantity: item.quantity,
-      categoryId: item.categoryId,
     }))
     .filter(
       (item, index, arr) =>
@@ -133,7 +130,6 @@ export default async function PackPage({
                 setItemEmoji={setPackEmoji}
                 clearItemImage={clearPackItemImage}
                 updateItemMeta={updatePackItemMeta}
-                categories={categories}
                 className="relative h-full"
               >
                 <div className="tile relative h-full p-3">
@@ -155,10 +151,7 @@ export default async function PackPage({
                     {item.name}
                   </p>
                   <p className="tnum mt-0.5 truncate text-xs text-text-3">
-                    {item.category
-                      ? `${item.category.emoji} ${item.category.name}`
-                      : "Senza categoria"}
-                    {item.quantity > 1 ? ` · ×${item.quantity}` : ""}
+                    {item.quantity > 1 ? ` ×${item.quantity}` : ""}
                   </p>
 
                   <div className="absolute right-2 top-2 flex items-center gap-1">
@@ -183,7 +176,6 @@ export default async function PackPage({
       <div className="fixed bottom-5 right-4 z-40 lg:bottom-8 lg:right-8">
         <PackAddSheet
           packId={pack.id}
-          categories={categories}
           suggestions={suggestions}
         />
       </div>

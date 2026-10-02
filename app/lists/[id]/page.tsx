@@ -22,25 +22,31 @@ import { DeleteItemButton } from "../../components/delete-item-button";
 import { ListRefresher } from "../../components/list-refresher";
 import { ListAddSheet } from "../../components/list-add-sheet";
 import { AppShell } from "../../components/app-shell";
-import { groupByCategory } from "../../lib/items";
 import type { GroupableItem } from "../../lib/items";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+function groupByNone(items: GroupableItem[]) {
+  return [{
+    key: "all",
+    name: "",
+    emoji: "",
+    items: [...items].sort((a, b) => a.sortOrder - b.sortOrder),
+  }];
+}
 
 function Tile({
   item,
   canEdit,
   isOwner,
   stored = false,
-  categories,
   updateItemMeta,
 }: {
   item: GroupableItem;
   canEdit: boolean;
   isOwner: boolean;
   stored?: boolean;
-  categories: { id: string; name: string; emoji: string }[];
   updateItemMeta: (formData: FormData) => Promise<void>;
 }) {
   const image = item.imageUrl ? (
@@ -109,7 +115,6 @@ function Tile({
               setItemEmoji={setItemEmoji}
               clearItemImage={clearItemImage}
               updateItemMeta={updateItemMeta}
-              categories={categories}
               className="absolute left-3 top-3 h-12 w-12"
             />
           ) : null}
@@ -201,18 +206,16 @@ export default async function ListPage({
   const user = await requireUser();
   const { id } = await params;
 
-  const [list, categories, packs] = await Promise.all([
+  const [list, packs] = await Promise.all([
     prisma.list.findUnique({
       where: { id },
       include: {
         items: {
-          include: { category: { select: { id: true, name: true, emoji: true } } },
           orderBy: [{ checked: "asc" }, { sortOrder: "asc" }],
         },
         members: { include: { user: { select: { name: true } } } },
       },
     }),
-    prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.pack.findMany({
       where: { ownerId: user.id },
       include: { items: { select: { id: true } } },
@@ -223,11 +226,6 @@ export default async function ListPage({
   if (!list) {
     notFound();
   }
-
-  const itemsWithCategoryId = list.items.map((item) => ({
-    ...item,
-    categoryId: item.category?.id ?? null,
-  }));
 
   const membership = list.members.find((m) => m.userId === user.id);
 
@@ -252,21 +250,20 @@ export default async function ListPage({
     ).map((p) => p.userId),
   );
 
-  const todo = groupByCategory(itemsWithCategoryId.filter((i) => !i.checked && !i.stored));
-  const done = groupByCategory(itemsWithCategoryId.filter((i) => i.checked && !i.stored));
-  const stored = groupByCategory(itemsWithCategoryId.filter((i) => i.stored));
-  const active = itemsWithCategoryId.filter((i) => !i.stored);
+  const todo = groupByNone(list.items.filter((i) => !i.checked && !i.stored));
+  const done = groupByNone(list.items.filter((i) => i.checked && !i.stored));
+  const stored = groupByNone(list.items.filter((i) => i.stored));
+  const active = list.items.filter((i) => !i.stored);
   const total = active.length;
   const completed = active.filter((i) => i.checked).length;
   const percent = total ? Math.round((completed / total) * 100) : 0;
 
-  const suggestions = itemsWithCategoryId
+  const suggestions = list.items
     .filter((i) => !i.stored)
     .map((i) => ({
       name: i.name,
       emoji: i.emoji,
       quantity: i.quantity,
-      categoryId: i.categoryId,
     }))
     .filter(
       (item, index, arr) =>
@@ -537,7 +534,7 @@ export default async function ListPage({
             </span>
           </h2>
 
-          {todo.length === 0 ? (
+{todo.length === 0 ? (
             <div className="mt-4 flex flex-col items-center gap-2 px-6 py-10 text-center">
               <span className="text-4xl" aria-hidden>
                 🎉
@@ -547,29 +544,26 @@ export default async function ListPage({
                 Tutto fatto. Aggiungi qualcosa o prendi una pausa.
               </p>
             </div>
-          ) : (
-            todo.map((group) => (
-              <div key={group.key} className="mt-3">
-                {todo.length > 1 ? (
-                  <p className="px-1 pb-2 text-sm font-semibold text-text-2">
-                    {group.emoji} {group.name}
-                  </p>
-                ) : null}
-                <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                  {group.items.map((item) => (
-                    <Tile
-                      key={item.id}
-                      item={item}
-                      canEdit={canEdit}
-                      isOwner={isOwner}
-                      categories={categories}
-                      updateItemMeta={updateItemMeta}
-                    />
-                  ))}
-                </ul>
-              </div>
-            ))
-          )}
+          ) : todo.map((group) => (
+            <div key={group.key} className="mt-3">
+              {todo.length > 1 ? (
+                <p className="px-1 pb-2 text-sm font-semibold text-text-2">
+                  {group.emoji} {group.name}
+                </p>
+              ) : null}
+              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                {group.items.map((item) => (
+                  <Tile
+                    key={item.id}
+                    item={item}
+                    canEdit={canEdit}
+                    isOwner={isOwner}
+                    updateItemMeta={updateItemMeta}
+                  />
+                ))}
+              </ul>
+            </div>
+          ))}
         </section>
 
         {done.length > 0 ? (
@@ -595,7 +589,6 @@ export default async function ListPage({
                       item={item}
                       canEdit={canEdit}
                       isOwner={isOwner}
-                      categories={categories}
                       updateItemMeta={updateItemMeta}
                     />
                   ))}
@@ -633,7 +626,6 @@ export default async function ListPage({
                         canEdit={canEdit}
                         isOwner={isOwner}
                         stored
-                        categories={categories}
                         updateItemMeta={updateItemMeta}
                       />
                     ))}
@@ -665,7 +657,6 @@ export default async function ListPage({
         <div className="fixed bottom-5 right-4 z-40 lg:bottom-8 lg:right-8">
           <ListAddSheet
             listId={list.id}
-            categories={categories}
             suggestions={suggestions}
           />
         </div>

@@ -103,8 +103,6 @@ export async function deleteList(formData: FormData) {
 
 /* ---------- Item ---------- */
 
-import { inferCategory } from "./lib/category-inference";
-
 export async function addItem(
   _prevState: { ok: boolean; error?: string },
   formData: FormData,
@@ -132,14 +130,6 @@ export async function addItem(
     select: { sortOrder: true },
   });
 
-  let categoryId = readText(formData, "categoryId") || null;
-  if (!categoryId) {
-    const categories = await prisma.category.findMany({
-      select: { id: true, name: true, emoji: true },
-    });
-    categoryId = inferCategory(name, categories);
-  }
-
   await prisma.item.create({
     data: {
       listId,
@@ -147,7 +137,6 @@ export async function addItem(
       emoji: readText(formData, "emoji") || "📦",
       quantity: readInt(formData, "quantity", 1),
       checked: readBool(formData, "checked"),
-      categoryId,
       sortOrder: (last?.sortOrder ?? 0) + 1,
     },
   });
@@ -556,21 +545,12 @@ export async function addPackItem(formData: FormData) {
     select: { sortOrder: true },
   });
 
-  let categoryId = readText(formData, "categoryId") || null;
-  if (!categoryId) {
-    const categories = await prisma.category.findMany({
-      select: { id: true, name: true, emoji: true },
-    });
-    categoryId = inferCategory(name, categories);
-  }
-
   await prisma.packItem.create({
     data: {
       packId,
       name,
       emoji: readText(formData, "emoji") || "📦",
       quantity: readInt(formData, "quantity", 1),
-      categoryId,
       sortOrder: (last?.sortOrder ?? 0) + 1,
     },
   });

@@ -1,33 +1,32 @@
 "use client";
 
 import { addItem } from "../actions";
-import { AddSheet, type AddSheetAction } from "./add-sheet";
+import { AddSheet, type AddSheetAction, type IconInfer } from "./add-sheet";
+import { inferIcon } from "../lib/icon-inference";
 
-type Category = { id: string; name: string; emoji: string };
 type Suggestion = {
   name: string;
   emoji: string;
   quantity?: number;
-  categoryId?: string | null;
 };
 
 export function ListAddSheet({
   listId,
-  categories,
   suggestions,
 }: {
   listId: string;
-  categories: Category[];
   suggestions: Suggestion[];
 }) {
-  const action: AddSheetAction = (formData) => addItem({ ok: false }, formData);
+  const action: AddSheetAction = async (formData) => addItem({ ok: false }, formData);
+  const iconInfer: IconInfer = inferIcon;
 
   return (
     <AddSheet
       hidden={{ name: "listId", value: listId }}
       action={action}
-      categories={categories}
       suggestions={suggestions}
+      iconInitial="📦"
+      onIconInfer={iconInfer}
     />
   );
 }

@@ -1,21 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Field } from "./ui/field";
 import { Input } from "./ui/input";
 import { IconPicker } from "./icon-picker";
 import { cn } from "./ui/cn";
 
-type Category = { id: string; name: string; emoji: string };
 type Suggestion = {
   name: string;
   emoji: string;
   quantity?: number;
-  categoryId?: string | null;
 };
 type ActionResult = { ok: boolean; error?: string };
 
 export type AddSheetAction = (formData: FormData) => Promise<ActionResult>;
+export type IconInfer = (name: string) => Promise<string>;
 
 export function AddSheet({
   fabLabel = "Aggiungi elemento",
@@ -25,8 +24,8 @@ export function AddSheet({
   iconInitial = "📦",
   hidden,
   action,
-  categories,
   suggestions,
+  onIconInfer,
 }: {
   fabLabel?: string;
   title?: string;
@@ -35,21 +34,26 @@ export function AddSheet({
   iconInitial?: string;
   hidden: { name: string; value: string };
   action: AddSheetAction;
-  categories: Category[];
   suggestions: Suggestion[];
+  onIconInfer?: IconInfer;
 }) {
   const [open, setOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [query, setQuery] = useState("");
+  const [currentIcon, setCurrentIcon] = useState(iconInitial);
   const nameRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inferTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inferAbort = useRef<AbortController | null>(null);
 
   useEffect(() => {
     return () => {
       if (toastTimer.current) clearTimeout(toastTimer.current);
+      if (inferTimer.current) clearTimeout(inferTimer.current);
+      if (inferAbort.current) inferAbort.current.abort();
     };
   }, []);
 
@@ -61,8 +65,30 @@ export function AddSheet({
       .slice(0, 8);
   }, [query, suggestions]);
 
+  const inferIcon = useCallback(async (name: string) => {
+    if (!onIconInfer || !name.trim()) return;
+    if (inferAbort.current) inferAbort.current.abort();
+    inferAbort.current = new AbortController();
+    try {
+      const emoji = await onIconInfer(name);
+      if (!inferAbort.current.signal.aborted) {
+        setCurrentIcon(emoji);
+      }
+    } catch {
+    }
+  }, [onIconInfer]);
+
+  const handleNameChange = (value: string) => {
+    setQuery(value);
+    if (inferTimer.current) clearTimeout(inferTimer.current);
+    inferTimer.current = setTimeout(() => {
+      inferIcon(value);
+    }, 300);
+  };
+
   function openSheet() {
     setQuery("");
+    setCurrentIcon(iconInitial);
     setError(null);
     setOpen(true);
     requestAnimationFrame(() => nameRef.current?.focus());
@@ -72,6 +98,8 @@ export function AddSheet({
     setOpen(false);
     setError(null);
     setPending(false);
+    if (inferTimer.current) clearTimeout(inferTimer.current);
+    if (inferAbort.current) inferAbort.current.abort();
   }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -162,7 +190,7 @@ export function AddSheet({
                   autoComplete="off"
                   placeholder={placeholder}
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => handleNameChange(e.target.value)}
                 />
               </Field>
 
@@ -172,7 +200,10 @@ export function AddSheet({
                     <button
                       key={`${suggestion.name}-${suggestion.emoji}`}
                       type="button"
-                      onClick={() => setQuery(suggestion.name)}
+                      onClick={() => {
+                        setQuery(suggestion.name);
+                        setCurrentIcon(suggestion.emoji);
+                      }}
                       className="chip flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-text-2 hover:bg-subtle"
                     >
                       <span aria-hidden>{suggestion.emoji}</span>
@@ -182,38 +213,20 @@ export function AddSheet({
                 </div>
               ) : null}
 
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Quantità">
-                  <Input
-                    name="quantity"
-                    type="number"
-                    min={1}
-                    max={999}
-                    defaultValue={1}
-                    inputMode="numeric"
-                  />
-                </Field>
-                <Field label="Categoria">
-                  <select
-                    name="categoryId"
-                    defaultValue=""
-                    className={cn(
-                      "min-h-12 w-full rounded-xl border border-line-strong bg-surface px-3 text-base text-text outline-none focus:border-accent",
-                    )}
-                  >
-                    <option value="">Senza categoria</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.emoji} {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-              </div>
+              <Field label="Quantità">
+                <Input
+                  name="quantity"
+                  type="number"
+                  min={1}
+                  max={999}
+                  defaultValue={1}
+                  inputMode="numeric"
+                />
+              </Field>
 
               <div className="flex items-center gap-3">
                 <span className="text-sm font-semibold text-text-2">Icona</span>
-                <IconPicker initial={iconInitial} />
+                <IconPicker initial={currentIcon} />
               </div>
 
               {error ? (
